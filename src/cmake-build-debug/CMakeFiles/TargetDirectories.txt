@@ -1,0 +1,3 @@
+/home/linux/Desktop/FEUP INFORMATICA/3 ano/2S/CAL/T5G6/src/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/linux/Desktop/FEUP INFORMATICA/3 ano/2S/CAL/T5G6/src/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/linux/Desktop/FEUP INFORMATICA/3 ano/2S/CAL/T5G6/src/cmake-build-debug/CMakeFiles/example.dir
