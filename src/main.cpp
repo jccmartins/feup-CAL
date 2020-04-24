@@ -33,7 +33,7 @@ void drawGraphFromFile(std::string city_name, unsigned int port){
     width = 1000;
     height = 500;
     scale = 500;
-    size = 100;
+    size = 10;
     node_color = GREEN;
     edge_color = BLUE;
 

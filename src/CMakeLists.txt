@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(example)
+project(project)
 
 set(CMAKE_CXX_STANDARD 14)
 # The line below is necessary if you are under Windows only
@@ -8,4 +8,4 @@ set(CMAKE_CXX_STANDARD 14)
 
 include_directories(lib)
 include_directories(resources)
-add_executable(example main.cpp lib/connection.cpp lib/graphviewer.cpp)
+add_executable(project main.cpp lib/connection.cpp lib/graphviewer.cpp)
