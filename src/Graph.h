@@ -128,7 +128,7 @@ public:
 	vector<T> getPathTo(const T &dest) const;
 
 	void loadFile();
-	void drawGraph();
+	void drawGraph(GraphViewer *gv);
 };
 
 template <class T>
@@ -273,8 +273,8 @@ void Graph<T>::loadFile()
 	// city_name_lowercase[0] = tolower(city_name_lowercase[0]);
 	// std::ifstream nodes("../resources/Mapas-20200424/PortugalMaps/PortugalMaps/" + city_name + "/nodes_x_y_" + city_name_lowercase + ".txt");
 	// std::ifstream edges("../resources/Mapas-20200424/PortugalMaps/PortugalMaps/" + city_name + "/edges_" + city_name_lowercase + ".txt");
-	std::ifstream nodes("../resources/Mapas-20200424/GridGraphs/4x4/nodes.txt");
-	std::ifstream edges("../resources/Mapas-20200424/GridGraphs/4x4/edges.txt");
+	std::ifstream nodes("../resources/Mapas-20200424/PortugalMaps/PortugalMaps/Porto/nodes_x_y_porto.txt");
+	std::ifstream edges("../resources/Mapas-20200424/PortugalMaps/PortugalMaps/Porto/edges_porto.txt");
 	std::string line;
 	std::istringstream iss;
 	unsigned int node_id, n_nodes, n_edges, node_id_origin, node_id_destination;
@@ -310,48 +310,35 @@ void Graph<T>::loadFile()
  * Draw all vertices and edges of the map
 */
 template <class T>
-void Graph<T>::drawGraph()
+void Graph<T>::drawGraph(GraphViewer *gv)
 {
-	unsigned int node_id, height, width, node_id_origin, node_id_destination, dynamic, size,dashed, curved;
-	string node_color, edge_color;
-
-	dynamic = false;
-	dashed = false;
-	curved = false;
-	width = 1000;
-	height = 500;
-	size = 10;
-	node_color = GREEN;
-	edge_color = BLUE;
-
-	GraphViewer *gv = new GraphViewer(width, height, dynamic);
-	//    gv->setBackground(background_path);
-	gv->createWindow(width, height);
-	gv->defineEdgeDashed(dashed);
-	gv->defineEdgeCurved(curved);
-	gv->defineVertexColor(node_color);
-	gv->defineEdgeColor(edge_color);
-	gv->defineVertexSize(size);
-
-	// draw vertices and edges
-	float x, y;
 	float relative_x, relative_y;
-	unsigned int edge_id = 0, i = 0;
-	for (auto vertex : vertexSet)
+	unsigned int edge_id = 0;
+
+	// add vertices
+	for (int i = 0; i < vertexSet.size(); i++)
 	{
+		Vertex<T> *vertex = vertexSet[i];
+
 		if (i == 0)
 		{
 			relative_x = vertex->x;
 			relative_y = vertex->y;
 		}
+
 		gv->addNode(vertex->info, vertex->x - relative_x, vertex->y - relative_y);
+	}
+
+	// add edges
+	for (int i = 0; i < vertexSet.size(); i++)
+	{
+		Vertex<T> *vertex = vertexSet[i];
 
 		for (auto edge : vertex->edges_out)
 		{
 			gv->addEdge(edge_id, vertex->info, edge.dest->info, EdgeType::DIRECTED);
 			++edge_id;
 		}
-		++i;
 	}
 
 	gv->rearrange();
