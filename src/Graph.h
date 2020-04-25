@@ -9,82 +9,94 @@
 #include <list>
 #include <limits>
 #include <cmath>
+#include <string>
 #include "MutablePriorityQueue.h"
 
 using namespace std;
 
-template <class T> class Edge;
-template <class T> class Graph;
-template <class T> class Vertex;
+template <class T>
+class Edge;
+template <class T>
+class Graph;
+template <class T>
+class Vertex;
 
 #define INF std::numeric_limits<double>::max()
 
 /************************* Vertex  **************************/
 
 template <class T>
-class Vertex {
-	T info;						// content of the vertex
-	vector<Edge<T> > edges_out;		// outgoing edges
-	
+class Vertex
+{
+	T info;					   // content of the vertex
+	vector<Edge<T>> edges_out; // outgoing edges
+
+	float x, y; // x and y coordinates
+
 	double dist = 0;
 	Vertex<T> *path = NULL;
-	int queueIndex = 0; 		// required by MutablePriorityQueue
+	int queueIndex = 0; // required by MutablePriorityQueue
 
-	bool visited = false;		// auxiliary field
-	bool processing = false;	// auxiliary field
+	bool visited = false;	 // auxiliary field
+	bool processing = false; // auxiliary field
 
 	void addEdge(Vertex<T> *dest, double w);
 
 public:
-	Vertex(T in);
+	Vertex(T in, float x, float y);
 	T getInfo() const;
 	double getDist() const;
 	Vertex *getPath() const;
 
-	bool operator<(Vertex<T> & vertex) const; // // required by MutablePriorityQueue
+	bool operator<(Vertex<T> &vertex) const; // // required by MutablePriorityQueue
 	friend class Graph<T>;
 	friend class MutablePriorityQueue<Vertex<T>>;
 };
 
-
 template <class T>
-Vertex<T>::Vertex(T in): info(in) {}
+Vertex<T>::Vertex(T in, float x, float y) : info(in), x(x), y(y) {}
 
 /*
  * Auxiliary function to add an outgoing edge to a vertex (this),
  * with a given destination vertex (d) and edge weight (w).
  */
 template <class T>
-void Vertex<T>::addEdge(Vertex<T> *d, double w) {
+void Vertex<T>::addEdge(Vertex<T> *d, double w)
+{
 	edges_out.push_back(Edge<T>(d, w));
 }
 
 template <class T>
-bool Vertex<T>::operator<(Vertex<T> & vertex) const {
+bool Vertex<T>::operator<(Vertex<T> &vertex) const
+{
 	return this->dist < vertex.dist;
 }
 
 template <class T>
-T Vertex<T>::getInfo() const {
+T Vertex<T>::getInfo() const
+{
 	return this->info;
 }
 
 template <class T>
-double Vertex<T>::getDist() const {
+double Vertex<T>::getDist() const
+{
 	return this->dist;
 }
 
 template <class T>
-Vertex<T> *Vertex<T>::getPath() const {
+Vertex<T> *Vertex<T>::getPath() const
+{
 	return this->path;
 }
 
 /********************** Edge  ****************************/
 
 template <class T>
-class Edge {
-	Vertex<T> * dest;      // destination vertex
-	double weight;         // edge weight
+class Edge
+{
+	Vertex<T> *dest; // destination vertex
+	double weight;	 // edge weight
 public:
 	Edge(Vertex<T> *d, double w);
 	friend class Graph<T>;
@@ -92,44 +104,52 @@ public:
 };
 
 template <class T>
-Edge<T>::Edge(Vertex<T> *d, double w): dest(d), weight(w) {}
-
+Edge<T>::Edge(Vertex<T> *d, double w) : dest(d), weight(w) {}
 
 /*************************** Graph  **************************/
 
 template <class T>
-class Graph {
-	vector<Vertex<T> *> vertexSet;    // vertex set
+class Graph
+{
+	vector<Vertex<T> *> vertexSet; // vertex set
 
-    Vertex<T> * initSingleSource(const T &orig);
-    bool relax(Vertex<T> *v, Vertex<T> *w, double weight);
+	Vertex<T> *initSingleSource(const T &orig);
+	bool relax(Vertex<T> *v, Vertex<T> *w, double weight);
 
 public:
+	Graph();
 	Vertex<T> *findVertex(const T &in) const;
-	bool addVertex(const T &in);
-	bool addEdge(const T &sourc, const T &dest, double w);
+	bool addVertex(const T &in, float x, float y);
+	bool addEdge(const T &sourc, const T &dest);
 	int getNumVertex() const;
 	vector<Vertex<T> *> getVertexSet() const;
 
 	void dijkstraShortestPath(const T &s);
 	vector<T> getPathTo(const T &dest) const;
 
+	void loadFile();
+	void drawGraph();
 };
+
+template <class T>
+Graph<T>::Graph() {}
 
 /**
  * Initializes single-source shortest path data (path, dist).
  * Receives the content of the source vertex and returns a pointer to the source vertex.
  * Used by all single-source shortest path algorithms.
  */
- template<class T>
- Vertex<T> * Graph<T>::initSingleSource(const T &origin) {
-    for (auto v : vertexSet) {
-        v->dist = INF;
-        v->path = nullptr;
-    }
-    auto s = findVertex(origin);
-    s->dist = 0;
-    return s;
+template <class T>
+Vertex<T> *Graph<T>::initSingleSource(const T &origin)
+{
+	for (auto v : vertexSet)
+	{
+		v->dist = INF;
+		v->path = nullptr;
+	}
+	auto s = findVertex(origin);
+	s->dist = 0;
+	return s;
 }
 
 /**
@@ -137,24 +157,28 @@ public:
  * Returns true if the target vertex was relaxed (dist, path).
  * Used by all single-source shortest path algorithms.
  */
- template<class T>
- bool Graph<T>::relax(Vertex<T> *v, Vertex<T> *w, double weight) {
-    if (v->dist + weight < w->dist) {
-        w->dist = v->dist + weight;
-        w->path = v;
-        return true;
-    }
-    else
-        return false;
+template <class T>
+bool Graph<T>::relax(Vertex<T> *v, Vertex<T> *w, double weight)
+{
+	if (v->dist + weight < w->dist)
+	{
+		w->dist = v->dist + weight;
+		w->path = v;
+		return true;
+	}
+	else
+		return false;
 }
 
 template <class T>
-int Graph<T>::getNumVertex() const {
+int Graph<T>::getNumVertex() const
+{
 	return vertexSet.size();
 }
 
 template <class T>
-vector<Vertex<T> *> Graph<T>::getVertexSet() const {
+vector<Vertex<T> *> Graph<T>::getVertexSet() const
+{
 	return vertexSet;
 }
 
@@ -162,7 +186,8 @@ vector<Vertex<T> *> Graph<T>::getVertexSet() const {
  * Auxiliary function to find a vertex with a given content.
  */
 template <class T>
-Vertex<T> * Graph<T>::findVertex(const T &in) const {
+Vertex<T> *Graph<T>::findVertex(const T &in) const
+{
 	for (auto v : vertexSet)
 		if (v->info == in)
 			return v;
@@ -174,10 +199,11 @@ Vertex<T> * Graph<T>::findVertex(const T &in) const {
  *  Returns true if successful, and false if a vertex with that content already exists.
  */
 template <class T>
-bool Graph<T>::addVertex(const T &in) {
-	if ( findVertex(in) != NULL)
+bool Graph<T>::addVertex(const T &in, float x, float y)
+{
+	if (findVertex(in) != NULL)
 		return false;
-	vertexSet.push_back(new Vertex<T>(in));
+	vertexSet.push_back(new Vertex<T>(in, x, y));
 	return true;
 }
 
@@ -187,47 +213,148 @@ bool Graph<T>::addVertex(const T &in) {
  * Returns true if successful, and false if the source or destination vertex does not exist.
  */
 template <class T>
-bool Graph<T>::addEdge(const T &sourc, const T &dest, double w) {
+bool Graph<T>::addEdge(const T &sourc, const T &dest)
+{
 	auto v1 = findVertex(sourc);
 	auto v2 = findVertex(dest);
 	if (v1 == NULL || v2 == NULL)
 		return false;
-	v1->addEdge(v2,w);
+	double weight = sqrt(pow(v1->x - v2->x, 2) + pow(v1->y - v2->y, 2));
+	v1->addEdge(v2, weight);
 	return true;
 }
 
 /**
  * Dijkstra algorithm.
  */
- template<class T>
- void Graph<T>::dijkstraShortestPath(const T &origin) {
-     auto s = initSingleSource(origin);
-     MutablePriorityQueue<Vertex<T>> q;
-     q.insert(s);
-     while(!q.empty()) {
-         auto v = q.extractMin();
-         for (auto edge : v->edges_out) {
-             auto oldDist = edge.dest->dist;
-             if (relax(v, edge.dest, edge.weight)) {
-                 if (oldDist == INF)
-                     q.insert(edge.dest);
-                 else
-                     q.decreaseKey(edge.dest);
-             }
-         }
-     }
- }
+template <class T>
+void Graph<T>::dijkstraShortestPath(const T &origin)
+{
+	auto s = initSingleSource(origin);
+	MutablePriorityQueue<Vertex<T>> q;
+	q.insert(s);
+	while (!q.empty())
+	{
+		auto v = q.extractMin();
+		for (auto edge : v->edges_out)
+		{
+			auto oldDist = edge.dest->dist;
+			if (relax(v, edge.dest, edge.weight))
+			{
+				if (oldDist == INF)
+					q.insert(edge.dest);
+				else
+					q.decreaseKey(edge.dest);
+			}
+		}
+	}
+}
 
-template<class T>
-vector<T> Graph<T>::getPathTo(const T &dest) const{
+template <class T>
+vector<T> Graph<T>::getPathTo(const T &dest) const
+{
 	vector<T> res;
 	auto current = findVertex(dest);
-	while(current != NULL) {
-	    res.insert(res.begin(), current->info);
-	    current = current->path;
+	while (current != NULL)
+	{
+		res.insert(res.begin(), current->info);
+		current = current->path;
 	}
 	return res;
 }
 
+/**
+ * Load vertices and edges from .txt files and store them in the graph
+*/
+template <class T>
+void Graph<T>::loadFile()
+{
+	// string city_name_lowercase = city_name;
+	// city_name_lowercase[0] = tolower(city_name_lowercase[0]);
+	// std::ifstream nodes("../resources/Mapas-20200424/PortugalMaps/PortugalMaps/" + city_name + "/nodes_x_y_" + city_name_lowercase + ".txt");
+	// std::ifstream edges("../resources/Mapas-20200424/PortugalMaps/PortugalMaps/" + city_name + "/edges_" + city_name_lowercase + ".txt");
+	std::ifstream nodes("../resources/Mapas-20200424/GridGraphs/4x4/nodes.txt");
+	std::ifstream edges("../resources/Mapas-20200424/GridGraphs/4x4/edges.txt");
+	std::string line;
+	std::istringstream iss;
+	unsigned int node_id, n_nodes, n_edges, node_id_origin, node_id_destination;
+	float x, y;
+
+	// read num of nodes
+	std::getline(nodes, line);
+	iss.str(line);
+	iss >> n_nodes;
+
+	// load nodes
+	for (int i = 0; i < n_nodes; i++)
+	{
+		std::getline(nodes, line);
+		sscanf(line.c_str(), "(%d, %f, %f)", &node_id, &x, &y);
+		addVertex(node_id, x, y);
+	}
+
+	// read num of edges
+	std::getline(edges, line);
+	sscanf(line.c_str(), "%d", &n_edges);
+
+	//load edges
+	for (int i = 0; i < n_edges; i++)
+	{
+		std::getline(edges, line);
+		sscanf(line.c_str(), "(%d, %d)", &node_id_origin, &node_id_destination);
+		addEdge(node_id_origin, node_id_destination);
+	}
+}
+
+/** 
+ * Draw all vertices and edges of the map
+*/
+template <class T>
+void Graph<T>::drawGraph()
+{
+	unsigned int node_id, height, width, node_id_origin, node_id_destination, dynamic, size,dashed, curved;
+	string node_color, edge_color;
+
+	dynamic = false;
+	dashed = false;
+	curved = false;
+	width = 1000;
+	height = 500;
+	size = 10;
+	node_color = GREEN;
+	edge_color = BLUE;
+
+	GraphViewer *gv = new GraphViewer(width, height, dynamic);
+	//    gv->setBackground(background_path);
+	gv->createWindow(width, height);
+	gv->defineEdgeDashed(dashed);
+	gv->defineEdgeCurved(curved);
+	gv->defineVertexColor(node_color);
+	gv->defineEdgeColor(edge_color);
+	gv->defineVertexSize(size);
+
+	// draw vertices and edges
+	float x, y;
+	float relative_x, relative_y;
+	unsigned int edge_id = 0, i = 0;
+	for (auto vertex : vertexSet)
+	{
+		if (i == 0)
+		{
+			relative_x = vertex->x;
+			relative_y = vertex->y;
+		}
+		gv->addNode(vertex->info, vertex->x - relative_x, vertex->y - relative_y);
+
+		for (auto edge : vertex->edges_out)
+		{
+			gv->addEdge(edge_id, vertex->info, edge.dest->info, EdgeType::DIRECTED);
+			++edge_id;
+		}
+		++i;
+	}
+
+	gv->rearrange();
+}
 
 #endif /* GRAPH_H_ */
