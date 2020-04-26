@@ -1,17 +1,28 @@
-#include <fstream>
-#include <string>
-#include <sstream>
-#include <stdio.h>
-#include "graphviewer.h"
+#include "Manager.h"
 #include "Graph.h"
 
 int main()
 {
-	Graph<unsigned int> graph;
-	graph.loadFile();
+	Manager<unsigned int> *manager = new Manager<unsigned int>();
 
-	// graph.dijkstraShortestPath(474541486);
-	// vector<unsigned int> path = graph.getPathTo(417998888);
+	// vector<unsigned int> companies = manager->getCompaniesVerticesIds();
+	// cout << "Companies:\n";
+	// for (auto company : companies)
+	// {
+	// 	cout << company << " ";
+	// }
+	// cout << endl;
+
+	// unsigned int garage = manager->getGarageVertexId();
+	// cout << "Garage:\n";
+	// cout << garage << endl;
+
+	// vector<unsigned int> bus_stops = manager->getBusStopsVerticesIds();
+	// cout << "Bus stops:\n";
+	// for (auto stop : bus_stops)
+	// {
+	// 	cout << stop << " ";
+	// }
 
 	// initialize GraphViewer
 	GraphViewer *gv;
@@ -23,7 +34,7 @@ int main()
 	curved = false;
 	width = 1366;
 	height = 768;
-	size = 10;
+	size = 1;
 	node_color = GREEN;
 	edge_color = BLUE;
 
@@ -36,13 +47,39 @@ int main()
 	gv->defineEdgeColor(edge_color);
 	gv->defineVertexSize(size);
 
-	// for (int i = 0; i < path.size(); i++)
+	// graph.dijkstraShortestPath(90379359);
+	// unsigned int i = 0;
+	// string color;
+	// while (i < graph.getVertexSet().size())
 	// {
-	// 	cout << path[i] << endl;
-	// 	gv->setVertexColor(path[i], RED);
+	// 	if (graph.getVertexSet()[i]->getPath() != NULL)
+	// 	{
+	// 		vector<unsigned int> path = graph.getPathTo(graph.getVertexSet()[i]->getInfo());
+	// 		if (path.size() > 100)
+	// 		{
+	// 			for (int i = 0; i < path.size(); i++)
+	// 			{
+	// 				if (i == 0)
+	// 				{
+	// 					color = WHITE;
+	// 				}
+	// 				else if (i == path.size() - 1)
+	// 				{
+	// 					color = BLACK;
+	// 				}
+	// 				else
+	// 				{
+	// 					color = RED;
+	// 				}
+	// 				gv->setVertexColor(path[i], color);
+	// 			}
+	// 			break;
+	// 		}
+	// 	}
+	// 	++i;
 	// }
 
-	graph.drawGraph(gv);
+	manager->getGraph().drawGraph(gv);
 
 	getchar();
 

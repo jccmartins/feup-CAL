@@ -10,9 +10,10 @@
 #include <limits>
 #include <cmath>
 #include <string>
+#include <sstream>
+#include <fstream>
 #include "MutablePriorityQueue.h"
-
-using namespace std;
+#include "lib/graphviewer.h"
 
 template <class T>
 class Edge;
@@ -273,8 +274,10 @@ void Graph<T>::loadFile()
 	// city_name_lowercase[0] = tolower(city_name_lowercase[0]);
 	// std::ifstream nodes("../resources/Mapas-20200424/PortugalMaps/PortugalMaps/" + city_name + "/nodes_x_y_" + city_name_lowercase + ".txt");
 	// std::ifstream edges("../resources/Mapas-20200424/PortugalMaps/PortugalMaps/" + city_name + "/edges_" + city_name_lowercase + ".txt");
-	std::ifstream nodes("../resources/Mapas-20200424/PortugalMaps/PortugalMaps/Porto/nodes_x_y_porto.txt");
-	std::ifstream edges("../resources/Mapas-20200424/PortugalMaps/PortugalMaps/Porto/edges_porto.txt");
+	std::ifstream nodes("../resources/Mapas-20200424/GridGraphs/8x8/nodes.txt");
+	std::ifstream edges("../resources/Mapas-20200424/GridGraphs/8x8/edges.txt");
+	int edgeType = EdgeType::UNDIRECTED; // UNDIRECTED com grids, DIRECTED com maps
+
 	std::string line;
 	std::istringstream iss;
 	unsigned int node_id, n_nodes, n_edges, node_id_origin, node_id_destination;
@@ -302,6 +305,10 @@ void Graph<T>::loadFile()
 	{
 		std::getline(edges, line);
 		sscanf(line.c_str(), "(%d, %d)", &node_id_origin, &node_id_destination);
+		if (edgeType == EdgeType::UNDIRECTED)
+		{
+			addEdge(node_id_destination, node_id_origin);
+		}
 		addEdge(node_id_origin, node_id_destination);
 	}
 }
