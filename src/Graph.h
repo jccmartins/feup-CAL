@@ -274,8 +274,20 @@ void Graph<T>::loadFile()
 	// city_name_lowercase[0] = tolower(city_name_lowercase[0]);
 	// std::ifstream nodes("../resources/Mapas-20200424/PortugalMaps/PortugalMaps/" + city_name + "/nodes_x_y_" + city_name_lowercase + ".txt");
 	// std::ifstream edges("../resources/Mapas-20200424/PortugalMaps/PortugalMaps/" + city_name + "/edges_" + city_name_lowercase + ".txt");
-	std::ifstream nodes("../resources/Mapas-20200424/GridGraphs/8x8/nodes.txt");
-	std::ifstream edges("../resources/Mapas-20200424/GridGraphs/8x8/edges.txt");
+	std::string nodes_filename("resources/Mapas-20200424/GridGraphs/16x16/nodes.txt");
+	std::ifstream nodes(nodes_filename);
+	if(!nodes.good()){
+        std::cout << "Unable to access file " << nodes_filename << std::endl;
+        return;
+    }
+	
+	std::string edges_filename("resources/Mapas-20200424/GridGraphs/16x16/edges.txt");
+	std::ifstream edges(edges_filename);
+	if(!edges.good()){
+        std::cout << "Unable to access file " << edges_filename << std::endl;
+        return;
+    }
+
 	int edgeType = EdgeType::UNDIRECTED; // UNDIRECTED com grids, DIRECTED com maps
 
 	std::string line;
@@ -289,7 +301,7 @@ void Graph<T>::loadFile()
 	iss >> n_nodes;
 
 	// load nodes
-	for (int i = 0; i < n_nodes; i++)
+	for (unsigned int i = 0; i < n_nodes; i++)
 	{
 		std::getline(nodes, line);
 		sscanf(line.c_str(), "(%d, %f, %f)", &node_id, &x, &y);
@@ -301,7 +313,7 @@ void Graph<T>::loadFile()
 	sscanf(line.c_str(), "%d", &n_edges);
 
 	//load edges
-	for (int i = 0; i < n_edges; i++)
+	for (unsigned int i = 0; i < n_edges; i++)
 	{
 		std::getline(edges, line);
 		sscanf(line.c_str(), "(%d, %d)", &node_id_origin, &node_id_destination);
@@ -323,7 +335,7 @@ void Graph<T>::drawGraph(GraphViewer *gv)
 	unsigned int edge_id = 0;
 
 	// add vertices
-	for (int i = 0; i < vertexSet.size(); i++)
+	for (unsigned int i = 0; i < vertexSet.size(); i++)
 	{
 		Vertex<T> *vertex = vertexSet[i];
 
@@ -334,10 +346,11 @@ void Graph<T>::drawGraph(GraphViewer *gv)
 		}
 
 		gv->addNode(vertex->info, vertex->x - relative_x, vertex->y - relative_y);
+		gv->setVertexLabel(vertex->info, std::to_string(vertex->info));
 	}
 
 	// add edges
-	for (int i = 0; i < vertexSet.size(); i++)
+	for (unsigned int i = 0; i < vertexSet.size(); i++)
 	{
 		Vertex<T> *vertex = vertexSet[i];
 

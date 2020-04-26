@@ -1,10 +1,10 @@
 3
-building=company
-1
-240
 bus=garage
 1
 0
+company=BosH
+1
+260
 bus=stop
 10
 10

@@ -1,28 +1,11 @@
 #include "Manager.h"
 #include "Graph.h"
+#include "lib/graphviewer.h"
+#include "Company.h"
 
 int main()
 {
 	Manager<unsigned int> *manager = new Manager<unsigned int>();
-
-	// vector<unsigned int> companies = manager->getCompaniesVerticesIds();
-	// cout << "Companies:\n";
-	// for (auto company : companies)
-	// {
-	// 	cout << company << " ";
-	// }
-	// cout << endl;
-
-	// unsigned int garage = manager->getGarageVertexId();
-	// cout << "Garage:\n";
-	// cout << garage << endl;
-
-	// vector<unsigned int> bus_stops = manager->getBusStopsVerticesIds();
-	// cout << "Bus stops:\n";
-	// for (auto stop : bus_stops)
-	// {
-	// 	cout << stop << " ";
-	// }
 
 	// initialize GraphViewer
 	GraphViewer *gv;
@@ -35,7 +18,7 @@ int main()
 	width = 1366;
 	height = 768;
 	size = 1;
-	node_color = GREEN;
+	node_color = LIGHT_GRAY;
 	edge_color = BLUE;
 
 	gv = new GraphViewer(width, height, dynamic);
@@ -80,6 +63,33 @@ int main()
 	// }
 
 	manager->getGraph().drawGraph(gv);
+
+	// set company vertex color to black
+	vector<Company<unsigned int>> companies = manager->getCompanies();
+	for (unsigned int i = 0; i < companies.size(); i++)
+	{
+		std::cout << "Company: " << companies[i].getName() << " vertex id: " << companies[i].getCompanyVertexId() << endl;
+		gv->setVertexColor(companies[i].getCompanyVertexId(), GREEN);
+		std::string company_label = companies[i].getName() + " - " + std::to_string(companies[i].getCompanyVertexId());
+		std::cout << "label " << company_label << endl;
+		gv->setVertexLabel(companies[i].getCompanyVertexId(), company_label);
+
+		// set bus stops vertices color to orange
+		vector<unsigned int> bus_stops = companies[i].getBusStopsVerticesIds();
+		cout << "Bus stops: ";
+		for (auto stop : bus_stops)
+		{
+			cout << stop << " ";
+			gv->setVertexColor(stop, ORANGE);
+		}
+		cout << endl;
+	}
+
+	// set garage vertex color to cyan
+	unsigned int garage = manager->getGarageVertexId();
+	std::cout << "Garage: " << garage << endl;
+	gv->setVertexColor(garage, CYAN);
+	gv->setVertexLabel(garage, "GARAGE");
 
 	getchar();
 
