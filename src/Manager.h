@@ -12,11 +12,15 @@
 #include <sstream>
 #include <iostream>
 
+#include "Company.h"
+
 template <class T>
 class Graph;
 
 template <class T>
-class Company;
+struct Bus{
+    T capacity;
+};
 
 #define MAX std::numeric_limits<T>::max()
 
@@ -27,8 +31,7 @@ class Manager
 {
     Graph<T> graph;
     T garage_vertex_id;
-    T bus_capacity = MAX;
-    T number_of_buses = 1;
+    std::vector<Bus<T>> buses;
     std::vector<Company<T>> companies;
 
 public:
@@ -36,13 +39,12 @@ public:
 
     Graph<T> getGraph() const;
     T getGarageVertexId() const;
-    T getBusCapacity() const;
-    T getNumberOfBuses() const;
+    std::vector<Bus<T>> getBuses() const;
     std::vector<Company<T>> getCompanies() const;
 
     void loadTagsFile();
 
-    // std::vector<T> simulatedAnnealing();
+    void simulatedAnnealing();
 };
 
 /**
@@ -70,15 +72,9 @@ T Manager<T>::getGarageVertexId() const
 }
 
 template <class T>
-T Manager<T>::getBusCapacity() const
+std::vector<Bus<T>> Manager<T>::getBuses() const
 {
-    return this->bus_capacity;
-}
-
-template <class T>
-T Manager<T>::getNumberOfBuses() const
-{
-    return this->number_of_buses;
+    return this->buses;
 }
 
 template <class T>
@@ -147,10 +143,24 @@ void Manager<T>::loadTagsFile()
             else if (tag_id.substr(0, tag3.length()) == tag3)
             {
                 std::cout << "busstop\n";
-                this->companies[this->companies.size() - 1].bus_stops_vertices_ids.push_back(node_id);
+                iss.str(line);
+                Stop<T> *stop = new Stop<T>();
+                iss >> stop->vertex_id;
+                iss >> stop->number_of_workers;
+                std::cout << "stop vertex " << stop->vertex_id << " n workers " << stop->number_of_workers << std::endl;
+                this->companies[this->companies.size() - 1].bus_stops->push_back(stop);
             }
         }
     }
+    std::cout << "end\n";
+}
+
+template <class T>
+void Manager<T>::simulatedAnnealing()
+{
+    unsigned int num_iterations = 1000000;
+
+
 }
 
 #endif /* MANAGER_H_ */

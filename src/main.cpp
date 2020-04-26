@@ -6,6 +6,7 @@
 int main()
 {
 	Manager<unsigned int> *manager = new Manager<unsigned int>();
+	std::cout << "continei\n";
 
 	// initialize GraphViewer
 	GraphViewer *gv;
@@ -63,6 +64,9 @@ int main()
 	// }
 
 	manager->getGraph().drawGraph(gv);
+	
+	manager->simulatedAnnealing();
+	cout << "A\n";
 
 	// set company vertex color to black
 	vector<Company<unsigned int>> companies = manager->getCompanies();
@@ -75,21 +79,21 @@ int main()
 		gv->setVertexLabel(companies[i].getCompanyVertexId(), company_label);
 
 		// set bus stops vertices color to orange
-		vector<unsigned int> bus_stops = companies[i].getBusStopsVerticesIds();
+		vector<Stop<unsigned int> *> bus_stops = *companies[i].getBusStops();
 		cout << "Bus stops: ";
 		for (auto stop : bus_stops)
 		{
-			cout << stop << " ";
-			gv->setVertexColor(stop, ORANGE);
+			cout << stop->vertex_id << " " << stop->number_of_workers << std::endl;
+			gv->setVertexColor(stop->vertex_id, ORANGE);
 		}
-		cout << endl;
 	}
 
 	// set garage vertex color to cyan
 	unsigned int garage = manager->getGarageVertexId();
 	std::cout << "Garage: " << garage << endl;
 	gv->setVertexColor(garage, CYAN);
-	gv->setVertexLabel(garage, "GARAGE");
+	std::string garage_label = "GARAGE - " + std::to_string(garage);
+	gv->setVertexLabel(garage, garage_label);
 
 	getchar();
 
