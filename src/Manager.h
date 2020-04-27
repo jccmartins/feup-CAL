@@ -158,10 +158,10 @@ void Manager<T>::loadTagsFile()
             {
                 std::cout << "busstop\n";
                 iss.str(line);
-                Stop<T> *stop = new Stop<T>();
-                iss >> stop->vertex_id;
-                iss >> stop->number_of_workers;
-                std::cout << "stop vertex " << stop->vertex_id << " n workers " << stop->number_of_workers << std::endl;
+                Stop<T> stop;
+                iss >> stop.vertex_id;
+                iss >> stop.number_of_workers;
+                std::cout << "stop vertex " << stop.vertex_id << " n workers " << stop.number_of_workers << std::endl;
                 this->companies[this->companies.size() - 1].bus_stops->push_back(stop);
             }
         }
@@ -171,7 +171,7 @@ void Manager<T>::loadTagsFile()
 
 /************************* ALGORITHMS  **************************/
 template <class T>
-std::vector<Bus<T> *> getBusesForCompany(std::vector<Stop<T> *> bus_stops, std::vector<Bus<T> *> buses)
+std::vector<Bus<T> *> getBusesForCompany(std::vector<Stop<T>> bus_stops, std::vector<Bus<T> *> buses)
 {
     std::cout << "getbusesforcompany begin\n";
     std::vector<Bus<T> *> buses_for_company;
@@ -195,8 +195,8 @@ std::vector<Bus<T> *> getBusesForCompany(std::vector<Stop<T> *> bus_stops, std::
     int number_of_workers = 0;
     for (auto stop : bus_stops)
     {
-        std::cout << "stop n workers " << stop->number_of_workers << std::endl;
-        number_of_workers += stop->number_of_workers;
+        std::cout << "stop n workers " << stop.number_of_workers << std::endl;
+        number_of_workers += stop.number_of_workers;
     }
     std::cout << "num workers " << number_of_workers << std::endl;
 
@@ -244,9 +244,39 @@ bool greater_capacity(const Bus<T> *bus1, const Bus<T> *bus2)
     return bus1->capacity < bus2->capacity;
 }
 
+unsigned int probability(double delta_distance, double temperature)
+{
+    /**
+     * probability function to decide wether to change the solution or not
+     * as delta distance decreases the probability is higher which means better solutions are favoured
+     * as temperature decreases the probability to change to a better solution is higher
+     * and the probability to change to a worse solution is lower 
+     * which means that as the temperature reaches 0 
+     * the algorithm will behave similar to hill climbing (only changing to better solutions)
+    */
+    return (1 / (1 + exp(delta_distance / temperature)));
+}
+
+template <class T>
+std::vector<Stop<T>> randomNeighbour(std::vector<Stop<T>> bus_stops)
+{
+    unsigned int index1, index2;
+    do
+    {
+        index1 = rand() % (bus_stops.size());
+        index2 = rand() % (bus_stops.size());
+    } while (index1 == index2);
+    std::cout << "index1 " << index1 << std::endl;
+    std::cout << "index2 " << index2 << std::endl;
+    std::swap(bus_stops[index1], bus_stops[index2]);
+    return bus_stops;
+}
+
 template <class T>
 void Manager<T>::simulatedAnnealing()
 {
+    srand(time(NULL));
+
     // re-initialize buses
     for (auto bus : buses)
     {
@@ -261,8 +291,10 @@ void Manager<T>::simulatedAnnealing()
     }
 
     unsigned int num_iterations = 1000000;
-    float temperature;
-    std::vector<Stop<T> *> bus_stops;
+    double temperature, temperature_decrease_rate, delta_distance;
+    std::vector<Stop<T>> bus_stops;
+    std::vector<Stop<T>> new_bus_stops;
+    double r, prob;
     for (auto company : companies)
     {
         if (getBusesForCompany(*company.getBusStops(), this->buses).empty())
@@ -271,16 +303,44 @@ void Manager<T>::simulatedAnnealing()
         }
         else
         {
-            // bus_stops = *company.getBusStops();
-            // temperature = 500;
-            // for (unsigned int i = 0; i < num_iterations; i++)
+            std::cout << "old bus stops\n";
+            for (auto stop : *company.getBusStops())
+            {
+                std::cout << stop.vertex_id << " ";
+            }
+            std::cout << std::endl;
+            bus_stops = randomNeighbour(*company.getBusStops());
+            std::cout << "new bus stops\n";
+            for (auto stop : bus_stops)
+            {
+                std::cout << stop.vertex_id << " ";
+            }
+            std::cout << std::endl;
+            // temperature initial value
+            temperature = 5000;
+            temperature_decrease_rate = (double)temperature / num_iterations;
+            std::cout << temperature_decrease_rate << std::endl;
+            getchar();
+            // for (unsigned int i = 0; i < 5; i++)
             // {
-            //     // distance();
-            //     // temperature = temperature((float)(i + 1) / num_iterations);
+            //     new_bus_stops = randomNeighbour(bus_stops);
+            //     delta_distance = (double)distance(new_bus_stops, &this->buses) - distance(bus_stops, &this->buses);
+
+            //     r = ((double)rand() / (RAND_MAX));
+            //     prob = probability(delta_distance, temperature);
+            //     std::cout << "random " << r << std::endl;
+            //     std::cout << "prob " << prob << std::endl;
+            //     if (r < prob)
+            //     {
+            //         bus_stops = new_bus_stops;
+            //     }
             //     std::cout << temperature << std::endl;
+            //     temperature -= temperature_decrease_rate;
+            //     getchar();
             // }
         }
 
+        // atribuir o path às buses
         std::cout << "PRESS ANY KEY\n";
         getchar();
     }

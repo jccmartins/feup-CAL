@@ -81,12 +81,12 @@ int main()
 		gv->setVertexLabel(companies[i].getCompanyVertexId(), company_label);
 
 		// set bus stops vertices color to orange
-		vector<Stop<int> *> bus_stops = *companies[i].getBusStops();
+		vector<Stop<int>> bus_stops = *companies[i].getBusStops();
 		cout << "Bus stops: ";
 		for (auto stop : bus_stops)
 		{
-			cout << stop->vertex_id << " " << stop->number_of_workers << std::endl;
-			gv->setVertexColor(stop->vertex_id, ORANGE);
+			cout << stop.vertex_id << " " << stop.number_of_workers << std::endl;
+			gv->setVertexColor(stop.vertex_id, ORANGE);
 		}
 	}
 

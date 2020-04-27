@@ -32,7 +32,7 @@ class Vertex
 	T info;					   // content of the vertex
 	vector<Edge<T>> edges_out; // outgoing edges
 
-	float x, y; // x and y coordinates
+	double x, y; // x and y coordinates
 
 	double dist = 0;
 	Vertex<T> *path = NULL;
@@ -44,7 +44,7 @@ class Vertex
 	void addEdge(Vertex<T> *dest, double w);
 
 public:
-	Vertex(T in, float x, float y);
+	Vertex(T in, double x, double y);
 	T getInfo() const;
 	double getDist() const;
 	Vertex *getPath() const;
@@ -55,7 +55,7 @@ public:
 };
 
 template <class T>
-Vertex<T>::Vertex(T in, float x, float y) : info(in), x(x), y(y) {}
+Vertex<T>::Vertex(T in, double x, double y) : info(in), x(x), y(y) {}
 
 /*
  * Auxiliary function to add an outgoing edge to a vertex (this),
@@ -120,7 +120,7 @@ class Graph
 public:
 	Graph();
 	Vertex<T> *findVertex(const T &in) const;
-	bool addVertex(const T &in, float x, float y);
+	bool addVertex(const T &in, double x, double y);
 	bool addEdge(const T &sourc, const T &dest);
 	int getNumVertex() const;
 	vector<Vertex<T> *> getVertexSet() const;
@@ -200,7 +200,7 @@ Vertex<T> *Graph<T>::findVertex(const T &in) const
  *  Returns true if successful, and false if a vertex with that content already exists.
  */
 template <class T>
-bool Graph<T>::addVertex(const T &in, float x, float y)
+bool Graph<T>::addVertex(const T &in, double x, double y)
 {
 	if (findVertex(in) != NULL)
 		return false;
@@ -293,7 +293,7 @@ void Graph<T>::loadFile()
 	std::string line;
 	std::istringstream iss;
 	unsigned int node_id, n_nodes, n_edges, node_id_origin, node_id_destination;
-	float x, y;
+	double x, y;
 
 	// read num of nodes
 	std::getline(nodes, line);
@@ -304,7 +304,7 @@ void Graph<T>::loadFile()
 	for (unsigned int i = 0; i < n_nodes; i++)
 	{
 		std::getline(nodes, line);
-		sscanf(line.c_str(), "(%d, %f, %f)", &node_id, &x, &y);
+		sscanf(line.c_str(), "(%d, %lf, %lf)", &node_id, &x, &y);
 		addVertex(node_id, x, y);
 	}
 
@@ -331,7 +331,7 @@ void Graph<T>::loadFile()
 template <class T>
 void Graph<T>::drawGraph(GraphViewer *gv)
 {
-	float relative_x, relative_y;
+	double relative_x, relative_y;
 	unsigned int edge_id = 0;
 
 	// add vertices
