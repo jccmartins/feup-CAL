@@ -3,9 +3,11 @@
 #include "lib/graphviewer.h"
 #include "Company.h"
 
+#include <algorithm>    // std::sort
+
 int main()
 {
-	Manager<unsigned int> *manager = new Manager<unsigned int>();
+	Manager<int> *manager = new Manager<int>();
 	std::cout << "continei\n";
 
 	// initialize GraphViewer
@@ -69,7 +71,7 @@ int main()
 	cout << "A\n";
 
 	// set company vertex color to black
-	vector<Company<unsigned int>> companies = manager->getCompanies();
+	vector<Company<int>> companies = manager->getCompanies();
 	for (unsigned int i = 0; i < companies.size(); i++)
 	{
 		std::cout << "Company: " << companies[i].getName() << " vertex id: " << companies[i].getCompanyVertexId() << endl;
@@ -79,7 +81,7 @@ int main()
 		gv->setVertexLabel(companies[i].getCompanyVertexId(), company_label);
 
 		// set bus stops vertices color to orange
-		vector<Stop<unsigned int> *> bus_stops = *companies[i].getBusStops();
+		vector<Stop<int> *> bus_stops = *companies[i].getBusStops();
 		cout << "Bus stops: ";
 		for (auto stop : bus_stops)
 		{

@@ -11,6 +11,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <algorithm>
 
 #include "Company.h"
 
@@ -18,8 +19,11 @@ template <class T>
 class Graph;
 
 template <class T>
-struct Bus{
+struct Bus
+{
+    T id;
     T capacity;
+    std::vector<int> *path;
 };
 
 #define MAX std::numeric_limits<T>::max()
@@ -31,7 +35,7 @@ class Manager
 {
     Graph<T> graph;
     T garage_vertex_id;
-    std::vector<Bus<T>> buses;
+    std::vector<Bus<T> *> buses;
     std::vector<Company<T>> companies;
 
 public:
@@ -39,7 +43,7 @@ public:
 
     Graph<T> getGraph() const;
     T getGarageVertexId() const;
-    std::vector<Bus<T>> getBuses() const;
+    std::vector<Bus<T> *> getBuses() const;
     std::vector<Company<T>> getCompanies() const;
 
     void loadTagsFile();
@@ -54,9 +58,19 @@ public:
 template <class T>
 Manager<T>::Manager()
 {
+    // initialize graph
     this->graph.loadFile();
-    std::cout << "loaded nodes\n";
+    // initialize garage vertex id and companies info
     loadTagsFile();
+    // initializes buses
+    std::vector<int> capacities = {20, 30, 10, 2, 5, 1, 40};
+    for (unsigned int i = 0; i < capacities.size(); i++)
+    {
+        Bus<T> *bus = new Bus<T>();
+        bus->id = i;
+        bus->capacity = capacities[i];
+        buses.push_back(bus);
+    }
 }
 
 template <class T>
@@ -72,7 +86,7 @@ T Manager<T>::getGarageVertexId() const
 }
 
 template <class T>
-std::vector<Bus<T>> Manager<T>::getBuses() const
+std::vector<Bus<T> *> Manager<T>::getBuses() const
 {
     return this->buses;
 }
@@ -155,12 +169,121 @@ void Manager<T>::loadTagsFile()
     std::cout << "end\n";
 }
 
+/************************* ALGORITHMS  **************************/
+template <class T>
+std::vector<Bus<T> *> getBusesForCompany(std::vector<Stop<T> *> bus_stops, std::vector<Bus<T> *> buses)
+{
+    std::cout << "getbusesforcompany begin\n";
+    std::vector<Bus<T> *> buses_for_company;
+
+    // remove unavailable buses from vector
+    for (unsigned int i = 0; i < buses.size(); i++)
+    {
+        if (buses[i]->path != NULL)
+        {
+            buses.erase(buses.begin() + i);
+        }
+    }
+
+    for (auto bus : buses)
+    {
+        std::cout << "available buses\n";
+        std::cout << "bus id " << bus->id << " capacity " << bus->capacity << std::endl;
+    }
+
+    // get total number of workers
+    int number_of_workers = 0;
+    for (auto stop : bus_stops)
+    {
+        std::cout << "stop n workers " << stop->number_of_workers << std::endl;
+        number_of_workers += stop->number_of_workers;
+    }
+    std::cout << "num workers " << number_of_workers << std::endl;
+
+    // get total capacity of all available buses
+    int total_capacity = 0;
+    for (auto bus : buses)
+    {
+        total_capacity += bus->capacity;
+    }
+    std::cout << "available buses total capacity " << total_capacity << std::endl;
+    // if available buses can provide the service
+    if (number_of_workers <= total_capacity)
+    {
+        // get minimum number of buses
+        while (number_of_workers > 0)
+        {
+            for (unsigned int i = 0; i < buses.size(); i++)
+            {
+                if (buses[i]->capacity >= number_of_workers || i == buses.size() - 1)
+                {
+                    number_of_workers -= buses[i]->capacity;
+                    std::cout << "num workers " << number_of_workers << std::endl;
+                    buses_for_company.push_back(buses[i]);
+                    buses.erase(buses.begin() + i);
+                    break;
+                }
+            }
+        }
+    }
+
+    std::cout << "buses for company\n";
+    for (auto bus : buses_for_company)
+    {
+        std::cout << "bus id " << bus->id << " capacity " << bus->capacity << std::endl;
+    }
+
+    std::cout << "getbusesforcompany end\n";
+
+    return buses_for_company;
+}
+
+template <class T>
+bool greater_capacity(const Bus<T> *bus1, const Bus<T> *bus2)
+{
+    return bus1->capacity < bus2->capacity;
+}
+
 template <class T>
 void Manager<T>::simulatedAnnealing()
 {
+    // re-initialize buses
+    for (auto bus : buses)
+    {
+        bus->path = NULL;
+    }
+
+    // sort buses in ascending order of capacity
+    std::sort(buses.begin(), buses.end(), greater_capacity<T>);
+    for (auto bus : buses)
+    {
+        std::cout << "bus id " << bus->id << " capacity " << bus->capacity << std::endl;
+    }
+
     unsigned int num_iterations = 1000000;
+    float temperature;
+    std::vector<Stop<T> *> bus_stops;
+    for (auto company : companies)
+    {
+        if (getBusesForCompany(*company.getBusStops(), this->buses).empty())
+        {
+            std::cout << "Not enough buses to provide transportation to " << company.getName() << " workers\n";
+        }
+        else
+        {
+            // bus_stops = *company.getBusStops();
+            // temperature = 500;
+            // for (unsigned int i = 0; i < num_iterations; i++)
+            // {
+            //     // distance();
+            //     // temperature = temperature((float)(i + 1) / num_iterations);
+            //     std::cout << temperature << std::endl;
+            // }
+        }
 
-
+        std::cout << "PRESS ANY KEY\n";
+        getchar();
+    }
 }
 
 #endif /* MANAGER_H_ */
