@@ -66,6 +66,18 @@ int main()
 	// }
 
 	manager->getGraph().drawGraph(gv);
+
+	// // TEST BEGIN
+	// manager->getGraph().dijkstraShortestPath(0);
+	// manager->getGraph().getPathTo(35);
+	// Vertex<int> *vertex = manager->getGraph().findVertex(35);
+	// Vertex<int> *path = vertex;
+	// std::cout << "dist " << path->getDist() << std::endl;
+	// while(path != NULL){
+	// 	gv->setVertexColor(path->getInfo(), RED);
+	// 	path = path->getPath();
+	// }
+	// // TEST END
 	
 	manager->simulatedAnnealing();
 	cout << "A\n";
