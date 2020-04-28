@@ -3,8 +3,6 @@
 #include "lib/graphviewer.h"
 #include "Company.h"
 
-#include <algorithm>    // std::sort
-
 int main()
 {
 	Manager<int> *manager = new Manager<int>();
@@ -78,11 +76,11 @@ int main()
 	// 	path = path->getPath();
 	// }
 	// // TEST END
-	
+
 	manager->simulatedAnnealing();
 	cout << "A\n";
 
-	// set company vertex color to black
+	// set company vertex color
 	vector<Company<int>> companies = manager->getCompanies();
 	for (unsigned int i = 0; i < companies.size(); i++)
 	{
@@ -92,9 +90,9 @@ int main()
 		std::cout << "label " << company_label << endl;
 		gv->setVertexLabel(companies[i].getCompanyVertexId(), company_label);
 
-		// set bus stops vertices color to orange
+		// set bus stops vertices color
 		vector<Stop<int>> bus_stops = *companies[i].getBusStops();
-		cout << "Bus stops: ";
+		cout << "Bus stops: \n";
 		for (auto stop : bus_stops)
 		{
 			cout << stop.vertex_id << " " << stop.number_of_workers << std::endl;
@@ -108,6 +106,47 @@ int main()
 	gv->setVertexColor(garage, CYAN);
 	std::string garage_label = "GARAGE - " + std::to_string(garage);
 	gv->setVertexLabel(garage, garage_label);
+
+	for (Bus<int> *bus : manager->getBuses())
+	{
+		if (!bus->path.empty())
+		{
+			std::cout << "bus capacity " << bus->capacity << std::endl;
+			std::cout << "bus path size " << bus->path.size() << std::endl;
+			for (unsigned int i = 0; i + 1 < bus->path.size(); i++)
+			{
+				std::cout << bus->path[i] << " ";
+				if(i+2 == bus->path.size()){
+					std::cout << bus->path[i+1] << " ";
+				}
+				manager->getGraph().dijkstraShortestPath(bus->path[i]);
+				manager->getGraph().getPathTo(bus->path[i + 1]);
+				Vertex<int> *vertex = manager->getGraph().findVertex(bus->path[i + 1]);
+				Vertex<int> *path = vertex->getPath();
+				while (path->getPath() != NULL)
+				{
+					gv->setVertexColor(path->getInfo(), RED);
+					path = path->getPath();
+				}
+			}
+			std::cout << "\n";
+			getchar();
+
+			// reset colors
+			for (unsigned int i = 0; i + 1 < bus->path.size(); i++)
+			{
+				manager->getGraph().dijkstraShortestPath(bus->path[i]);
+				manager->getGraph().getPathTo(bus->path[i + 1]);
+				Vertex<int> *vertex = manager->getGraph().findVertex(bus->path[i + 1]);
+				Vertex<int> *path = vertex->getPath();
+				while (path->getPath() != NULL)
+				{
+					gv->setVertexColor(path->getInfo(), node_color);
+					path = path->getPath();
+				}
+			}
+		}
+	}
 
 	getchar();
 
