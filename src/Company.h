@@ -27,24 +27,21 @@ class Company
 {
     std::string name;
     T company_vertex_id;
-    std::vector<Stop<T>> *bus_stops;
+    std::vector<Stop<T>> bus_stops;
 
 public:
     Company(std::string name, T company_vertex_id);
 
     std::string getName() const;
     T getCompanyVertexId() const;
-    std::vector<Stop<T>> *getBusStops() const;
+    std::vector<Stop<T>> getBusStops() const;
 
     friend class Manager<T>;
 };
 
 template <class T>
 Company<T>::Company(std::string name, T company_vertex_id)
-    : name(name), company_vertex_id(company_vertex_id)
-{
-    this->bus_stops = new std::vector<Stop<T>>;
-}
+    : name(name), company_vertex_id(company_vertex_id) {}
 
 template <class T>
 std::string Company<T>::getName() const
@@ -59,7 +56,7 @@ T Company<T>::getCompanyVertexId() const
 }
 
 template <class T>
-std::vector<Stop<T>> *Company<T>::getBusStops() const
+std::vector<Stop<T>> Company<T>::getBusStops() const
 {
     return this->bus_stops;
 }
