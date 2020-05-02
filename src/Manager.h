@@ -12,6 +12,8 @@
 #include <sstream>
 #include <iostream>
 #include <algorithm>
+#include <unordered_map>
+#include <utility> // std::pair
 
 #include "Company.h"
 #include "Graph.h"
@@ -25,6 +27,26 @@ struct Bus
 };
 
 #define MAX std::numeric_limits<T>::max()
+
+// A hash function used to hash a pair of any kind
+struct pair_hash
+{
+    template <class T>
+    std::size_t operator()(const std::pair<T, T> &p) const
+    {
+        auto h1 = std::hash<T>{}(p.first);
+        auto h2 = std::hash<T>{}(p.second);
+
+        return h1 ^ h2;
+    }
+};
+
+// template <class T>
+// bool operator==(const std::pair<T, T> &p1, const std::pair<T, T> &p2)
+// {
+//     std::cout << "operator overloading\n";
+//     return (p1.first == p2.first && p1.second == p2.second);
+// }
 
 /************************* Manager  **************************/
 
@@ -47,7 +69,11 @@ public:
     void loadTagsFile();
 
     std::vector<Bus<T> *> getBusesForCompany(Company<T> company);
-    int distance(std::vector<Stop<T>> bus_stops, std::vector<Bus<T> *> buses, T company_vertex_id);
+    double distance(std::vector<Stop<T>> bus_stops, std::vector<Bus<T> *> buses,
+                                T company_vertex_id,
+                                std::unordered_map<std::pair<T, T>, double, pair_hash> *distances);
+    std::unordered_map<std::pair<T, T>, double, pair_hash> getBusStopsDistances(
+        T garage_vertex_id, std::vector<Stop<T>> bus_stops, T company_vertex_id);
     void simulatedAnnealing();
 };
 
@@ -323,26 +349,88 @@ std::vector<vector<T>> getBusesPaths(std::vector<Stop<T>> bus_stops, std::vector
 }
 
 template <class T>
-int Manager<T>::distance(std::vector<Stop<T>> bus_stops, std::vector<Bus<T> *> buses, T company_vertex_id)
+double Manager<T>::distance(std::vector<Stop<T>> bus_stops, std::vector<Bus<T> *> buses, T company_vertex_id,
+                            std::unordered_map<std::pair<T, T>, double, pair_hash> *distances)
 {
-    int total_distance = 0;
+    double total_distance = 0;
 
     vector<vector<T>> buses_paths = getBusesPaths(bus_stops, buses);
-    Vertex<int> *vertex;
     for (auto &path : buses_paths)
     {
         path.insert(path.begin(), this->garage_vertex_id);
         path.push_back(company_vertex_id);
         for (unsigned int i = 0; i < path.size() - 1; i++)
         {
-            graph.dijkstraShortestPath(path[i]);
-            graph.getPathTo(path[i + 1]);
-            vertex = graph.findVertex(path[i + 1]);
-            total_distance += vertex->getDist();
+            total_distance += distances->at({path[i], path[i + 1]});
         }
     }
 
     return total_distance;
+}
+
+/**
+ * Calculates and stores distances between bus stops and garage and company vertices
+ * and stores them in an unordered map
+ */
+template <class T>
+std::unordered_map<std::pair<T, T>, double, pair_hash> Manager<T>::getBusStopsDistances(
+    T garage_vertex_id, std::vector<Stop<T>> bus_stops, T company_vertex_id)
+{
+    std::unordered_map<std::pair<int, int>, double, pair_hash> distances;
+
+    double distance;
+    Vertex<T> *vertex;
+
+    for (unsigned int i = 0; i < bus_stops.size(); i++)
+    {
+        // calculate and store distances between garage and all bus stops
+        graph.dijkstraShortestPath(garage_vertex_id);
+        graph.getPathTo(bus_stops[i].vertex_id);
+        vertex = graph.findVertex(bus_stops[i].vertex_id);
+        distance = vertex->getDist();
+
+        distances[{garage_vertex_id, bus_stops[i].vertex_id}] = distance;
+
+        // calculate and store distances between all bus stops and company
+        graph.dijkstraShortestPath(bus_stops[i].vertex_id);
+        graph.getPathTo(company_vertex_id);
+        vertex = graph.findVertex(company_vertex_id);
+        distance = vertex->getDist();
+
+        distances[{bus_stops[i].vertex_id, company_vertex_id}] = distance;
+
+        unsigned int aux_index = i + 1;
+        while (aux_index < bus_stops.size())
+        {
+            // calculate and store distances between bus stops
+            graph.dijkstraShortestPath(bus_stops[i].vertex_id);
+            graph.getPathTo(bus_stops[aux_index].vertex_id);
+            vertex = graph.findVertex(bus_stops[aux_index].vertex_id);
+            distance = vertex->getDist();
+
+            distances[{bus_stops[i].vertex_id, bus_stops[aux_index].vertex_id}] = distance;
+
+            graph.dijkstraShortestPath(bus_stops[aux_index].vertex_id);
+            graph.getPathTo(bus_stops[i].vertex_id);
+            vertex = graph.findVertex(bus_stops[i].vertex_id);
+            distance = vertex->getDist();
+
+            distances[{bus_stops[aux_index].vertex_id, bus_stops[i].vertex_id}] = distance;
+
+            ++aux_index;
+        }
+    }
+
+    unsigned int i = 0;
+    for (auto &entry : distances)
+    {
+        std::cout << "iter " << i << " ";
+        std::cout << "first " << entry.first.first << " second " << entry.first.second << " ";
+        std::cout << " distance " << entry.second << std::endl;
+        ++i;
+    }
+
+    return distances;
 }
 
 template <class T>
@@ -363,12 +451,14 @@ void Manager<T>::simulatedAnnealing()
         std::cout << "bus id " << bus.id << " capacity " << bus.capacity << std::endl;
     }
 
-    unsigned int num_iterations = 10000;
-    double temperature, temperature_decrease_rate, delta_distance;
+    unsigned int num_iterations = 100000;
+    double temperature_decrease_rate = 0.01;
+    double temperature, delta_distance;
     std::vector<Stop<T>> bus_stops;
     std::vector<Stop<T>> new_bus_stops;
     double r, prob;
     double current_distance, new_distance;
+    std::unordered_map<std::pair<int, int>, double, pair_hash> distances;
     for (auto &company : companies)
     {
         std::vector<Bus<T> *> buses_for_company = getBusesForCompany(company);
@@ -380,7 +470,8 @@ void Manager<T>::simulatedAnnealing()
         else
         {
             bus_stops = company.getBusStops();
-
+            distances = getBusStopsDistances(this->garage_vertex_id, bus_stops, company.getCompanyVertexId());
+            getchar();
             std::cout << "Buses pathes\n";
             for (auto vector : getBusesPaths(bus_stops, buses_for_company))
             {
@@ -390,11 +481,10 @@ void Manager<T>::simulatedAnnealing()
                 }
                 std::cout << "\n";
             }
-            current_distance = distance(bus_stops, buses_for_company, company.company_vertex_id);
+            current_distance = distance(bus_stops, buses_for_company, company.company_vertex_id, &distances);
             std::cout << std::endl;
             // temperature initial value
-            temperature = 1000;
-            temperature_decrease_rate = (double)temperature / num_iterations;
+            temperature = num_iterations * temperature_decrease_rate;
             std::cout << "temp dec rate " << temperature_decrease_rate << std::endl;
             for (unsigned int i = 0; i < num_iterations; i++)
             {
@@ -411,7 +501,7 @@ void Manager<T>::simulatedAnnealing()
                     std::cout << stop.vertex_id << " ";
                 }
                 std::cout << std::endl;
-                new_distance = distance(new_bus_stops, buses_for_company, company.company_vertex_id);
+                new_distance = distance(new_bus_stops, buses_for_company, company.company_vertex_id, &distances);
                 delta_distance = new_distance - current_distance;
                 std::cout << "deltadistance " << delta_distance << std::endl;
 
@@ -419,7 +509,7 @@ void Manager<T>::simulatedAnnealing()
                 prob = probability(delta_distance, temperature);
                 std::cout << "r " << r << std::endl;
                 std::cout << "prob " << prob << std::endl;
-                if (r < prob)
+                if (r <= prob)
                 {
                     bus_stops = new_bus_stops;
                     current_distance = new_distance;
@@ -459,6 +549,8 @@ void Manager<T>::simulatedAnnealing()
 
             buses_for_company[i]->path = buses_paths[i];
         }
+
+        std::cout << "total distance: " << current_distance << "\n";
 
         std::cout << "PRESS ANY KEY\n";
         getchar();
