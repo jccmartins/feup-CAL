@@ -61,20 +61,22 @@ class Manager
 public:
     Manager();
 
-    Graph<T> getGraph() const;
+    Graph<T> &getGraph();
     T getGarageVertexId() const;
     std::vector<Bus<T>> getBuses() const;
-    std::vector<Company<T>> getCompanies() const;
+    std::vector<Company<T>> &getCompanies();
 
     void loadTagsFile();
 
     std::vector<Bus<T> *> getBusesForCompany(Company<T> company);
     double distance(std::vector<Stop<T>> bus_stops, std::vector<Bus<T> *> buses,
-                                T company_vertex_id,
-                                std::unordered_map<std::pair<T, T>, double, pair_hash> *distances);
+                    T company_vertex_id,
+                    std::unordered_map<std::pair<T, T>, double, pair_hash> *distances);
     std::unordered_map<std::pair<T, T>, double, pair_hash> getBusStopsDistances(
         T garage_vertex_id, std::vector<Stop<T>> bus_stops, T company_vertex_id);
-    void simulatedAnnealing();
+    void simulatedAnnealing(Company<T> company);
+    void clearBusesPaths();
+    void sortBusesAscendingCapacity();
 };
 
 /**
@@ -84,12 +86,10 @@ public:
 template <class T>
 Manager<T>::Manager()
 {
-    // initialize graph
-    this->graph.loadFile();
-    // initialize garage vertex id and companies info
-    loadTagsFile();
+    // // initialize garage vertex id and companies info
+    // loadTagsFile();
     // initializes buses
-    std::vector<int> capacities = {20, 10, 40, 2, 5, 1};
+    std::vector<int> capacities =  {40};
     for (unsigned int i = 0; i < capacities.size(); i++)
     {
         Bus<T> bus;
@@ -100,7 +100,7 @@ Manager<T>::Manager()
 }
 
 template <class T>
-Graph<T> Manager<T>::getGraph() const
+Graph<T> &Manager<T>::getGraph()
 {
     return this->graph;
 }
@@ -118,7 +118,7 @@ std::vector<Bus<T>> Manager<T>::getBuses() const
 }
 
 template <class T>
-std::vector<Company<T>> Manager<T>::getCompanies() const
+std::vector<Company<T>> &Manager<T>::getCompanies()
 {
     return this->companies;
 }
@@ -434,126 +434,129 @@ std::unordered_map<std::pair<T, T>, double, pair_hash> Manager<T>::getBusStopsDi
 }
 
 template <class T>
-void Manager<T>::simulatedAnnealing()
+void Manager<T>::simulatedAnnealing(Company<T> company)
 {
-    srand(time(NULL));
-
-    // re-initialize buses
-    for (Bus<T> &bus : buses)
-    {
-        bus.path.clear();
-    }
-
-    // sort buses in ascending order of capacity
-    std::sort(buses.begin(), buses.end(), greater_capacity<T>);
-    for (auto bus : buses)
-    {
-        std::cout << "bus id " << bus.id << " capacity " << bus.capacity << std::endl;
-    }
-
     unsigned int num_iterations = 100000;
     double temperature_decrease_rate = 0.01;
     double temperature, delta_distance;
     std::vector<Stop<T>> bus_stops;
     std::vector<Stop<T>> new_bus_stops;
     double r, prob;
-    double current_distance, new_distance;
+    double current_distance = 0, new_distance = 0;
     std::unordered_map<std::pair<int, int>, double, pair_hash> distances;
-    for (auto &company : companies)
+
+    std::vector<Bus<T> *> buses_for_company = getBusesForCompany(company);
+    std::cout << "Company " << company.getName() << ":\n";
+    getchar();
+    if (buses_for_company.empty())
     {
-        std::vector<Bus<T> *> buses_for_company = getBusesForCompany(company);
+        std::cout << "Not enough buses to provide transportation to " << company.getName() << " workers\n";
+    }
+    else
+    {
+        bus_stops = company.getBusStops();
+        distances = getBusStopsDistances(this->garage_vertex_id, bus_stops, company.getCompanyVertexId());
         getchar();
-        if (buses_for_company.empty())
+        std::cout << "Buses pathes\n";
+        for (auto vector : getBusesPaths(bus_stops, buses_for_company))
         {
-            std::cout << "Not enough buses to provide transportation to " << company.getName() << " workers\n";
-        }
-        else
-        {
-            bus_stops = company.getBusStops();
-            distances = getBusStopsDistances(this->garage_vertex_id, bus_stops, company.getCompanyVertexId());
-            getchar();
-            std::cout << "Buses pathes\n";
-            for (auto vector : getBusesPaths(bus_stops, buses_for_company))
-            {
-                for (auto elem : vector)
-                {
-                    std::cout << elem << " ";
-                }
-                std::cout << "\n";
-            }
-            current_distance = distance(bus_stops, buses_for_company, company.company_vertex_id, &distances);
-            std::cout << std::endl;
-            // temperature initial value
-            temperature = num_iterations * temperature_decrease_rate;
-            std::cout << "temp dec rate " << temperature_decrease_rate << std::endl;
-            for (unsigned int i = 0; i < num_iterations; i++)
-            {
-                std::cout << "old bus stops\n";
-                for (auto stop : bus_stops)
-                {
-                    std::cout << stop.vertex_id << " ";
-                }
-                std::cout << std::endl;
-                new_bus_stops = randomNeighbour(bus_stops);
-                std::cout << "NEW bus stops\n";
-                for (auto stop : new_bus_stops)
-                {
-                    std::cout << stop.vertex_id << " ";
-                }
-                std::cout << std::endl;
-                new_distance = distance(new_bus_stops, buses_for_company, company.company_vertex_id, &distances);
-                delta_distance = new_distance - current_distance;
-                std::cout << "deltadistance " << delta_distance << std::endl;
-
-                r = ((double)rand() / (RAND_MAX));
-                prob = probability(delta_distance, temperature);
-                std::cout << "r " << r << std::endl;
-                std::cout << "prob " << prob << std::endl;
-                if (r <= prob)
-                {
-                    bus_stops = new_bus_stops;
-                    current_distance = new_distance;
-                }
-                std::cout << "temperature " << temperature << std::endl;
-                temperature -= temperature_decrease_rate;
-            }
-        }
-
-        std::cout << "STOPS\n";
-        for (auto stop : bus_stops)
-        {
-            std::cout << stop.vertex_id << " ";
-        }
-        std::cout << "\n";
-
-        std::cout << "BUSES FOR COMPANY ID-CAPACITY\n";
-        for (auto bus : buses_for_company)
-        {
-            cout << bus->id << "-" << bus->capacity << " ";
-        }
-        std::cout << "\n";
-
-        // attribute paths to buses
-        std::vector<vector<T>> buses_paths = getBusesPaths(bus_stops, buses_for_company);
-        std::cout << "BUSES PATHS\n";
-        for (unsigned int i = 0; i < buses_for_company.size(); i++)
-        {
-            buses_paths[i].insert(buses_paths[i].begin(), this->garage_vertex_id);
-            buses_paths[i].push_back(company.company_vertex_id);
-
-            for (auto elem : buses_paths[i])
+            for (auto elem : vector)
             {
                 std::cout << elem << " ";
             }
             std::cout << "\n";
-
-            buses_for_company[i]->path = buses_paths[i];
         }
+        current_distance = distance(bus_stops, buses_for_company, company.company_vertex_id, &distances);
+        std::cout << std::endl;
+        // temperature initial value
+        temperature = num_iterations * temperature_decrease_rate;
+        std::cout << "temp dec rate " << temperature_decrease_rate << std::endl;
+        for (unsigned int i = 0; i < num_iterations; i++)
+        {
+            std::cout << "old bus stops\n";
+            for (auto stop : bus_stops)
+            {
+                std::cout << stop.vertex_id << " ";
+            }
+            std::cout << std::endl;
+            new_bus_stops = randomNeighbour(bus_stops);
+            std::cout << "NEW bus stops\n";
+            for (auto stop : new_bus_stops)
+            {
+                std::cout << stop.vertex_id << " ";
+            }
+            std::cout << std::endl;
+            new_distance = distance(new_bus_stops, buses_for_company, company.company_vertex_id, &distances);
+            delta_distance = new_distance - current_distance;
+            r = ((double)rand() / (RAND_MAX));
+            prob = probability(delta_distance, temperature);
+            std::cout << "r " << r << std::endl;
+            std::cout << "prob " << prob << std::endl;
+            if (r <= prob)
+            {
+                bus_stops = new_bus_stops;
+                current_distance = new_distance;
+            }
+            std::cout << "temperature " << temperature << std::endl;
+            temperature -= temperature_decrease_rate;
+        }
+    }
 
-        std::cout << "total distance: " << current_distance << "\n";
+    std::cout << "STOPS\n";
+    for (auto stop : bus_stops)
+    {
+        std::cout << stop.vertex_id << " ";
+    }
+    std::cout << "\n";
 
-        std::cout << "PRESS ANY KEY\n";
-        getchar();
+    std::cout << "BUSES FOR COMPANY ID-CAPACITY\n";
+    for (auto bus : buses_for_company)
+    {
+        cout << bus->id << "-" << bus->capacity << " ";
+    }
+    std::cout << "\n";
+
+    // attribute paths to buses
+    std::vector<vector<T>> buses_paths = getBusesPaths(bus_stops, buses_for_company);
+    std::cout << "BUSES PATHS\n";
+    for (unsigned int i = 0; i < buses_for_company.size(); i++)
+    {
+        buses_paths[i].insert(buses_paths[i].begin(), this->garage_vertex_id);
+        buses_paths[i].push_back(company.company_vertex_id);
+
+        for (auto elem : buses_paths[i])
+        {
+            std::cout << elem << " ";
+        }
+        std::cout << "\n";
+
+        buses_for_company[i]->path = buses_paths[i];
+    }
+
+    std::cout << "total distance: " << current_distance << "\n";
+
+    std::cout << "PRESS ANY KEY\n";
+    getchar();
+}
+
+template <class T>
+void Manager<T>::clearBusesPaths()
+{
+    // re-initialize buses
+    for (Bus<T> &bus : buses)
+    {
+        bus.path.clear();
+    }
+}
+
+template <class T>
+void Manager<T>::sortBusesAscendingCapacity()
+{
+    // sort buses in ascending order of capacity
+    std::sort(buses.begin(), buses.end(), greater_capacity<T>);
+    for (auto bus : buses)
+    {
+        std::cout << "bus id " << bus.id << " capacity " << bus.capacity << std::endl;
     }
 }
 

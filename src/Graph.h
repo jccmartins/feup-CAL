@@ -128,7 +128,7 @@ public:
 	void dijkstraShortestPath(const T &s);
 	vector<T> getPathTo(const T &dest) const;
 
-	void loadFile();
+	void loadNodesAndEdges(string city_name);
 	void drawGraph(GraphViewer *gv);
 };
 
@@ -268,27 +268,43 @@ vector<T> Graph<T>::getPathTo(const T &dest) const
  * Load vertices and edges from .txt files and store them in the graph
 */
 template <class T>
-void Graph<T>::loadFile()
+void Graph<T>::loadNodesAndEdges(string city_name)
 {
-	// string city_name_lowercase = city_name;
-	// city_name_lowercase[0] = tolower(city_name_lowercase[0]);
-	// std::ifstream nodes("../resources/Mapas-20200424/PortugalMaps/PortugalMaps/" + city_name + "/nodes_x_y_" + city_name_lowercase + ".txt");
-	// std::ifstream edges("../resources/Mapas-20200424/PortugalMaps/PortugalMaps/" + city_name + "/edges_" + city_name_lowercase + ".txt");
-	std::string nodes_filename("resources/Mapas-20200424/GridGraphs/16x16/nodes.txt");
-	std::ifstream nodes(nodes_filename);
-	if(!nodes.good()){
-        std::cout << "Unable to access file " << nodes_filename << std::endl;
-        return;
-    }
-	
-	std::string edges_filename("resources/Mapas-20200424/GridGraphs/16x16/edges.txt");
-	std::ifstream edges(edges_filename);
-	if(!edges.good()){
-        std::cout << "Unable to access file " << edges_filename << std::endl;
-        return;
-    }
+	std::string nodes_filename, edges_filename;
+	std::ifstream nodes, edges;
+	int edgeType;
 
-	int edgeType = EdgeType::UNDIRECTED; // UNDIRECTED com grids, DIRECTED com maps
+	if (city_name == "testing")
+	{
+		nodes_filename = "resources/Mapas-20200424/GridGraphs/16x16/nodes.txt";
+		edges_filename = "resources/Mapas-20200424/GridGraphs/16x16/edges.txt";
+
+		edgeType = EdgeType::UNDIRECTED; // UNDIRECTED com grids, DIRECTED com maps
+	}
+	else
+	{
+		string city_name_lowercase = city_name;
+		city_name_lowercase[0] = tolower(city_name_lowercase[0]);
+
+		nodes_filename = "resources/Mapas-20200424/PortugalMaps/PortugalMaps/" + city_name + "/nodes_x_y_" + city_name_lowercase + ".txt";
+		edges_filename = "resources/Mapas-20200424/PortugalMaps/PortugalMaps/" + city_name + "/edges_" + city_name_lowercase + ".txt";
+
+		edgeType = EdgeType::DIRECTED; // UNDIRECTED com grids, DIRECTED com maps
+	}
+
+	nodes.open(nodes_filename);
+	if (!nodes.good())
+	{
+		std::cout << "Unable to access file " << nodes_filename << std::endl;
+		return;
+	}
+
+	edges.open(edges_filename);
+	if (!edges.good())
+	{
+		std::cout << "Unable to access file " << edges_filename << std::endl;
+		return;
+	}
 
 	std::string line;
 	std::istringstream iss;
@@ -323,6 +339,9 @@ void Graph<T>::loadFile()
 		}
 		addEdge(node_id_origin, node_id_destination);
 	}
+
+	nodes.close();
+	edges.close();
 }
 
 /** 
