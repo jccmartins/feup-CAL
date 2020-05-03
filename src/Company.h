@@ -34,7 +34,7 @@ public:
 
     std::string getName() const;
     T getCompanyVertexId() const;
-    std::vector<Stop<T>> getBusStops() const;
+    std::vector<Stop<T>> &getBusStops();
 
     friend class Manager<T>;
 };
@@ -56,7 +56,7 @@ T Company<T>::getCompanyVertexId() const
 }
 
 template <class T>
-std::vector<Stop<T>> Company<T>::getBusStops() const
+std::vector<Stop<T>> &Company<T>::getBusStops()
 {
     return this->bus_stops;
 }

@@ -33,6 +33,10 @@ public:
     void chooseMap();
     void initializeGraphViewer();
     void menu();
+    void companiesMenu();
+    void manageCompanyMenu(Company<T> &company);
+    void addCompanyMenu();
+    void removeCompanyMenu();
     void printBusesRoutes(Company<T> company) const;
     void resetVerticesColor() const;
 };
@@ -107,7 +111,7 @@ void Interface<T>::chooseMap()
     std::cout << "Any other key - Exit\n\n";
     std::cout << "Option: ";
 
-    int option;
+    unsigned int option;
     std::cin >> option;
 
     string city_name;
@@ -159,19 +163,18 @@ void Interface<T>::menu()
         std::cout << "OPTIONS:\n";
         std::cout << "1 - Open Map\n";
         std::cout << "2 - View routes\n";
-        std::cout << "3 - View Companies\n";
-        std::cout << "4 - View Buses\n";
-        std::cout << "5 - Add/Remove/Change Company\n";
-        std::cout << "6 - Add/Remove Bus\n";
+        std::cout << "3 - Manage Companies\n";
+        std::cout << "4 - Manage Buses\n";
         std::cout << "Any other key - Exit\n\n";
         std::cout << "Option: ";
 
-        int option = -1;
+        unsigned int option;
         std::cin >> option;
 
         switch (option)
         {
         case 1:
+        {
             if (gv == NULL)
             {
                 initializeGraphViewer();
@@ -179,8 +182,10 @@ void Interface<T>::menu()
             openGraphViewerWindow();
             manager->getGraph().drawGraph(gv);
             setLocationsColorsAndLabels();
-            break;
+        }
+        break;
         case 2:
+        {
             manager->sortBusesAscendingCapacity();
 
             manager->clearBusesPaths();
@@ -198,23 +203,139 @@ void Interface<T>::menu()
                 manager->simulatedAnnealing(company, "garage");
                 printBusesRoutes(company);
             }
-            break;
+        }
+        break;
         case 3:
-
-            break;
+        {
+            companiesMenu();
+        }
+        break;
         case 4:
+        {
+        }
 
-            break;
-        case 5:
-
-            break;
-        case 6:
-
-            break;
+        break;
         default:
             done = true;
         }
     }
+}
+
+template <class T>
+void Interface<T>::companiesMenu()
+{
+    bool done = false;
+    while (!done)
+    {
+        std::cout << "=========\n";
+        std::cout << "Companies\n";
+        std::cout << "=========\n";
+        unsigned int company_index = 1;
+        for (auto &company : manager->getCompanies())
+        {
+            std::cout << company_index << " - ";
+            std::cout << "Company: " << company.getName() << "\n";
+            ++company_index;
+        }
+        std::cout << "\n";
+        std::cout << company_index << " - Add Company\n";
+        ++company_index;
+        std::cout << company_index << " - Remove Company\n";
+        ++company_index;
+        std::cout << "Any other key - Back To Menu\n\n";
+        std::cout << "Option: ";
+
+        unsigned int option;
+        cin >> option;
+
+        if (option > 0)
+        {
+            if (option <= manager->getCompanies().size())
+            {
+                manageCompanyMenu(manager->getCompanies()[option - 1]);
+            }
+            else if (option == manager->getCompanies().size() + 1)
+            {
+                addCompanyMenu();
+            }
+            else if (option == manager->getCompanies().size() + 2)
+            {
+                removeCompanyMenu();
+            }
+        }
+        else
+        {
+            done = true;
+        }
+    }
+}
+
+template <class T>
+void Interface<T>::manageCompanyMenu(Company<T> &company)
+{
+    bool done = false;
+    while (!done)
+    {
+        for (auto &company : manager->getCompanies())
+        {
+            std::cout << "Company: " << company.getName() << "\n";
+            std::cout << "  Location Vertex Id: " << company.getCompanyVertexId() << "\n";
+            std::cout << "  Bus Stops:\n";
+            for (auto &stop : company.getBusStops())
+            {
+                std::cout << "      Stop:\n";
+                std::cout << "          Vertex Id: " << stop.vertex_id << "\n";
+                std::cout << "          Number of Workers: " << stop.number_of_workers << "\n";
+            }
+        }
+        std::cout << "1 - Add/Update Bus Stop\n";
+        std::cout << "2 - Remove Bus Stop\n";
+        std::cout << "Any other key - Back to Companies\n";
+        std::cout << "Option: ";
+
+        unsigned int option;
+        std::cin >> option;
+
+        switch (option)
+        {
+        case 1:
+        {
+            std::cout << "========================\n";
+            std::cout << "Add or update a bus stop\n";
+            std::cout << "========================\n";
+            std::cout << "Bus Stop Vertex Id (0 - " << manager->getGraph().getNumVertex() << "): ";
+
+            int vertex_id;
+            std::cin >> vertex_id;
+
+            if(!cin.fail() && vertex_id > 0 && vertex_id < manager->getGraph().getNumVertex()){
+                // check if company already has bus stop with the same vertex id
+                
+            }
+
+            std::cout << "\nNumber of workers: ";
+            
+        }
+        break;
+        case 2:
+            break;
+        case 3:
+            break;
+        default:
+            done = true;
+            break;
+        }
+    }
+}
+
+template <class T>
+void Interface<T>::addCompanyMenu()
+{
+}
+
+template <class T>
+void Interface<T>::removeCompanyMenu()
+{
 }
 
 template <class T>
