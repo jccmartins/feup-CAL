@@ -68,13 +68,13 @@ public:
 
     void loadTagsFile();
 
-    std::vector<Bus<T> *> getBusesForCompany(Company<T> company);
+    std::vector<Bus<T> *> getBusesForCompany(Company<T> company, string direction);
     double distance(std::vector<Stop<T>> bus_stops, std::vector<Bus<T> *> buses,
                     T company_vertex_id,
-                    std::unordered_map<std::pair<T, T>, double, pair_hash> *distances);
+                    std::unordered_map<std::pair<T, T>, double, pair_hash> *distances, string direction);
     std::unordered_map<std::pair<T, T>, double, pair_hash> getBusStopsDistances(
-        T garage_vertex_id, std::vector<Stop<T>> bus_stops, T company_vertex_id);
-    void simulatedAnnealing(Company<T> company);
+        T garage_vertex_id, std::vector<Stop<T>> bus_stops, T company_vertex_id, string direction);
+    void simulatedAnnealing(Company<T> company, string direction);
     void clearBusesPaths();
     void sortBusesAscendingCapacity();
 };
@@ -89,7 +89,7 @@ Manager<T>::Manager()
     // // initialize garage vertex id and companies info
     // loadTagsFile();
     // initializes buses
-    std::vector<int> capacities =  {40};
+    std::vector<int> capacities = {40};
     for (unsigned int i = 0; i < capacities.size(); i++)
     {
         Bus<T> bus;
@@ -197,65 +197,82 @@ void Manager<T>::loadTagsFile()
 
 /************************* ALGORITHMS  **************************/
 template <class T>
-std::vector<Bus<T> *> Manager<T>::getBusesForCompany(Company<T> company)
+std::vector<Bus<T> *> Manager<T>::getBusesForCompany(Company<T> company, string direction)
 {
     std::cout << "getbusesforcompany begin\n";
     std::vector<Bus<T> *> buses_for_company;
 
-    std::vector<Bus<T> *> aux_buses;
-    for (auto &bus : this->buses)
+    if (direction == "company")
     {
-        aux_buses.push_back(&bus);
-    }
-
-    std::vector<Stop<T>> bus_stops = company.bus_stops;
-
-    // remove unavailable buses from vector
-    for (unsigned int i = 0; i < aux_buses.size(); i++)
-    {
-        if (!aux_buses[i]->path.empty())
+        std::vector<Bus<T> *> aux_buses;
+        for (auto &bus : this->buses)
         {
-            aux_buses.erase(aux_buses.begin() + i);
+            aux_buses.push_back(&bus);
+        }
+
+        std::vector<Stop<T>> bus_stops = company.bus_stops;
+
+        // remove unavailable buses from vector
+        for (unsigned int i = 0; i < aux_buses.size(); i++)
+        {
+            if (!aux_buses[i]->path.empty())
+            {
+                aux_buses.erase(aux_buses.begin() + i);
+            }
+        }
+
+        std::cout << "available buses\n";
+        for (auto bus : aux_buses)
+        {
+            std::cout << "bus id " << bus->id << " capacity " << bus->capacity << std::endl;
+        }
+
+        // get total number of workers
+        int number_of_workers = 0;
+        for (auto stop : bus_stops)
+        {
+            std::cout << "stop n workers " << stop.number_of_workers << std::endl;
+            number_of_workers += stop.number_of_workers;
+        }
+        std::cout << "num workers TOTAL " << number_of_workers << std::endl;
+
+        // get total capacity of all available buses
+        int total_capacity = 0;
+        for (auto bus : aux_buses)
+        {
+            total_capacity += bus->capacity;
+        }
+        std::cout << "available buses total capacity " << total_capacity << std::endl;
+        // if available buses can provide the service
+        if (number_of_workers <= total_capacity)
+        {
+            // get minimum number of buses
+            while (number_of_workers > 0)
+            {
+                for (unsigned int i = 0; i < aux_buses.size(); i++)
+                {
+                    if (aux_buses[i]->capacity >= number_of_workers || i == aux_buses.size() - 1)
+                    {
+                        number_of_workers -= aux_buses[i]->capacity;
+                        std::cout << "num workers " << number_of_workers << std::endl;
+                        buses_for_company.push_back(aux_buses[i]);
+                        aux_buses.erase(aux_buses.begin() + i);
+                        break;
+                    }
+                }
+            }
         }
     }
-
-    std::cout << "available buses\n";
-    for (auto bus : aux_buses)
+    else if (direction == "garage")
     {
-        std::cout << "bus id " << bus->id << " capacity " << bus->capacity << std::endl;
-    }
-
-    // get total number of workers
-    int number_of_workers = 0;
-    for (auto stop : bus_stops)
-    {
-        std::cout << "stop n workers " << stop.number_of_workers << std::endl;
-        number_of_workers += stop.number_of_workers;
-    }
-    std::cout << "num workers TOTAL " << number_of_workers << std::endl;
-
-    // get total capacity of all available buses
-    int total_capacity = 0;
-    for (auto bus : aux_buses)
-    {
-        total_capacity += bus->capacity;
-    }
-    std::cout << "available buses total capacity " << total_capacity << std::endl;
-    // if available buses can provide the service
-    if (number_of_workers <= total_capacity)
-    {
-        // get minimum number of buses
-        while (number_of_workers > 0)
+        for (auto &bus : this->buses)
         {
-            for (unsigned int i = 0; i < aux_buses.size(); i++)
+            if (!bus.path.empty())
             {
-                if (aux_buses[i]->capacity >= number_of_workers || i == aux_buses.size() - 1)
+                if (bus.path[0] == company.getCompanyVertexId() ||
+                    bus.path[bus.path.size() - 1] == company.getCompanyVertexId())
                 {
-                    number_of_workers -= aux_buses[i]->capacity;
-                    std::cout << "num workers " << number_of_workers << std::endl;
-                    buses_for_company.push_back(aux_buses[i]);
-                    aux_buses.erase(aux_buses.begin() + i);
-                    break;
+                    buses_for_company.push_back(&bus);
                 }
             }
         }
@@ -350,15 +367,23 @@ std::vector<vector<T>> getBusesPaths(std::vector<Stop<T>> bus_stops, std::vector
 
 template <class T>
 double Manager<T>::distance(std::vector<Stop<T>> bus_stops, std::vector<Bus<T> *> buses, T company_vertex_id,
-                            std::unordered_map<std::pair<T, T>, double, pair_hash> *distances)
+                            std::unordered_map<std::pair<T, T>, double, pair_hash> *distances, string direction)
 {
     double total_distance = 0;
 
     vector<vector<T>> buses_paths = getBusesPaths(bus_stops, buses);
     for (auto &path : buses_paths)
     {
-        path.insert(path.begin(), this->garage_vertex_id);
-        path.push_back(company_vertex_id);
+        if (direction == "company")
+        {
+            path.insert(path.begin(), this->garage_vertex_id);
+            path.push_back(company_vertex_id);
+        }
+        else if (direction == "garage")
+        {
+            path.insert(path.begin(), company_vertex_id);
+            path.push_back(this->garage_vertex_id);
+        }
         for (unsigned int i = 0; i < path.size() - 1; i++)
         {
             total_distance += distances->at({path[i], path[i + 1]});
@@ -374,7 +399,7 @@ double Manager<T>::distance(std::vector<Stop<T>> bus_stops, std::vector<Bus<T> *
  */
 template <class T>
 std::unordered_map<std::pair<T, T>, double, pair_hash> Manager<T>::getBusStopsDistances(
-    T garage_vertex_id, std::vector<Stop<T>> bus_stops, T company_vertex_id)
+    T garage_vertex_id, std::vector<Stop<T>> bus_stops, T company_vertex_id, string direction)
 {
     std::unordered_map<std::pair<int, int>, double, pair_hash> distances;
 
@@ -383,21 +408,42 @@ std::unordered_map<std::pair<T, T>, double, pair_hash> Manager<T>::getBusStopsDi
 
     for (unsigned int i = 0; i < bus_stops.size(); i++)
     {
-        // calculate and store distances between garage and all bus stops
-        graph.dijkstraShortestPath(garage_vertex_id);
-        graph.getPathTo(bus_stops[i].vertex_id);
-        vertex = graph.findVertex(bus_stops[i].vertex_id);
-        distance = vertex->getDist();
+        if (direction == "company")
+        {
+            // calculate and store distances between garage and all bus stops
+            graph.dijkstraShortestPath(garage_vertex_id);
+            graph.getPathTo(bus_stops[i].vertex_id);
+            vertex = graph.findVertex(bus_stops[i].vertex_id);
+            distance = vertex->getDist();
 
-        distances[{garage_vertex_id, bus_stops[i].vertex_id}] = distance;
+            distances[{garage_vertex_id, bus_stops[i].vertex_id}] = distance;
 
-        // calculate and store distances between all bus stops and company
-        graph.dijkstraShortestPath(bus_stops[i].vertex_id);
-        graph.getPathTo(company_vertex_id);
-        vertex = graph.findVertex(company_vertex_id);
-        distance = vertex->getDist();
+            // calculate and store distances between all bus stops and company
+            graph.dijkstraShortestPath(bus_stops[i].vertex_id);
+            graph.getPathTo(company_vertex_id);
+            vertex = graph.findVertex(company_vertex_id);
+            distance = vertex->getDist();
 
-        distances[{bus_stops[i].vertex_id, company_vertex_id}] = distance;
+            distances[{bus_stops[i].vertex_id, company_vertex_id}] = distance;
+        }
+        else if (direction == "garage")
+        {
+            // calculate and store distances between garage and all bus stops
+            graph.dijkstraShortestPath(bus_stops[i].vertex_id);
+            graph.getPathTo(garage_vertex_id);
+            vertex = graph.findVertex(garage_vertex_id);
+            distance = vertex->getDist();
+
+            distances[{bus_stops[i].vertex_id, garage_vertex_id}] = distance;
+
+            // calculate and store distances between all bus stops and company
+            graph.dijkstraShortestPath(company_vertex_id);
+            graph.getPathTo(bus_stops[i].vertex_id);
+            vertex = graph.findVertex(bus_stops[i].vertex_id);
+            distance = vertex->getDist();
+
+            distances[{company_vertex_id, bus_stops[i].vertex_id}] = distance;
+        }
 
         unsigned int aux_index = i + 1;
         while (aux_index < bus_stops.size())
@@ -434,7 +480,7 @@ std::unordered_map<std::pair<T, T>, double, pair_hash> Manager<T>::getBusStopsDi
 }
 
 template <class T>
-void Manager<T>::simulatedAnnealing(Company<T> company)
+void Manager<T>::simulatedAnnealing(Company<T> company, string direction)
 {
     unsigned int num_iterations = 100000;
     double temperature_decrease_rate = 0.01;
@@ -445,7 +491,7 @@ void Manager<T>::simulatedAnnealing(Company<T> company)
     double current_distance = 0, new_distance = 0;
     std::unordered_map<std::pair<int, int>, double, pair_hash> distances;
 
-    std::vector<Bus<T> *> buses_for_company = getBusesForCompany(company);
+    std::vector<Bus<T> *> buses_for_company = getBusesForCompany(company, direction);
     std::cout << "Company " << company.getName() << ":\n";
     getchar();
     if (buses_for_company.empty())
@@ -455,7 +501,7 @@ void Manager<T>::simulatedAnnealing(Company<T> company)
     else
     {
         bus_stops = company.getBusStops();
-        distances = getBusStopsDistances(this->garage_vertex_id, bus_stops, company.getCompanyVertexId());
+        distances = getBusStopsDistances(this->garage_vertex_id, bus_stops, company.getCompanyVertexId(), direction);
         getchar();
         std::cout << "Buses pathes\n";
         for (auto vector : getBusesPaths(bus_stops, buses_for_company))
@@ -466,7 +512,7 @@ void Manager<T>::simulatedAnnealing(Company<T> company)
             }
             std::cout << "\n";
         }
-        current_distance = distance(bus_stops, buses_for_company, company.company_vertex_id, &distances);
+        current_distance = distance(bus_stops, buses_for_company, company.company_vertex_id, &distances, direction);
         std::cout << std::endl;
         // temperature initial value
         temperature = num_iterations * temperature_decrease_rate;
@@ -486,7 +532,7 @@ void Manager<T>::simulatedAnnealing(Company<T> company)
                 std::cout << stop.vertex_id << " ";
             }
             std::cout << std::endl;
-            new_distance = distance(new_bus_stops, buses_for_company, company.company_vertex_id, &distances);
+            new_distance = distance(new_bus_stops, buses_for_company, company.company_vertex_id, &distances, direction);
             delta_distance = new_distance - current_distance;
             r = ((double)rand() / (RAND_MAX));
             prob = probability(delta_distance, temperature);
@@ -521,8 +567,16 @@ void Manager<T>::simulatedAnnealing(Company<T> company)
     std::cout << "BUSES PATHS\n";
     for (unsigned int i = 0; i < buses_for_company.size(); i++)
     {
-        buses_paths[i].insert(buses_paths[i].begin(), this->garage_vertex_id);
-        buses_paths[i].push_back(company.company_vertex_id);
+        if (direction == "company")
+        {
+            buses_paths[i].insert(buses_paths[i].begin(), this->garage_vertex_id);
+            buses_paths[i].push_back(company.company_vertex_id);
+        }
+        else if (direction == "garage")
+        {
+            buses_paths[i].insert(buses_paths[i].begin(), company.company_vertex_id);
+            buses_paths[i].push_back(this->garage_vertex_id);
+        }
 
         for (auto elem : buses_paths[i])
         {

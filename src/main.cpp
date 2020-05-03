@@ -6,6 +6,7 @@
 
 int main()
 {
+	srand(time(NULL));
 	Manager<int> *manager = new Manager<int>();
 	Interface<int> interface(manager);
 	interface.chooseMap();

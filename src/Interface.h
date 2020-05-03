@@ -181,15 +181,21 @@ void Interface<T>::menu()
             setLocationsColorsAndLabels();
             break;
         case 2:
-            srand(time(NULL));
-
-            manager->clearBusesPaths();
             manager->sortBusesAscendingCapacity();
 
+            manager->clearBusesPaths();
+
+            std::cout << "To work:\n";
             for (auto &company : manager->getCompanies())
             {
-                manager->simulatedAnnealing(company);
+                manager->simulatedAnnealing(company, "company");
+                printBusesRoutes(company);
+            }
 
+            std::cout << "Back home:\n";
+            for (auto &company : manager->getCompanies())
+            {
+                manager->simulatedAnnealing(company, "garage");
                 printBusesRoutes(company);
             }
             break;
@@ -241,11 +247,13 @@ void Interface<T>::printBusesRoutes(Company<T> company) const
                     }
                 }
                 std::cout << "\n";
+                gv->rearrange();
                 getchar();
 
                 // reset colors
                 resetVerticesColor();
                 setLocationsColorsAndLabels();
+                gv->rearrange();
             }
         }
     }
