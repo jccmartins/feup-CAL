@@ -39,6 +39,7 @@ public:
     void removeCompanyMenu();
     void printBusesRoutes(Company<T> company) const;
     void resetVerticesColor() const;
+    void manageBuses();
 };
 
 /**
@@ -73,6 +74,9 @@ void Interface<T>::setLocationsColorsAndLabels() const
 {
     // set company vertex color
     vector<Company<int>> companies = manager->getCompanies();
+    std::cout << "=========\n";
+    std::cout << "Companies\n";
+    std::cout << "=========\n";
     for (unsigned int i = 0; i < companies.size(); i++)
     {
         std::cout << "Company: " << companies[i].getName() << " vertex id: " << companies[i].getCompanyVertexId() << endl;
@@ -194,7 +198,6 @@ void Interface<T>::menu()
             }
             openGraphViewerWindow();
             manager->getGraph().drawGraph(gv);
-            setLocationsColorsAndLabels();
         }
         break;
         case 2:
@@ -225,10 +228,98 @@ void Interface<T>::menu()
         break;
         case 4:
         {
+            manageBuses();
         }
         break;
         default:
             done = true;
+        }
+    }
+}
+
+template <class T>
+void Interface<T>::manageBuses()
+{
+    bool done = false;
+    while (!done)
+    {
+        std::cout << "=====\n";
+        std::cout << "Buses\n";
+        std::cout << "=====\n";
+        unsigned int index = 0;
+        for (auto &bus : manager->getBuses())
+        {
+            std::cout << "Bus " << index << ":\n";
+            std::cout << "  Capacity: " << bus.capacity << "\n";
+            ++index;
+        }
+        std::cout << "\n1 - Add Bus\n";
+        std::cout << "2 - Remove Bus\n";
+        std::cout << "Any other key - Back to Menu\n";
+        std::cout << "Option: ";
+
+        int option;
+        std::cin >> option;
+        if (cin.fail())
+        {
+            option = -1;
+            cin.clear();
+            cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        }
+
+        std::vector<Bus<T>> &buses = manager->getBuses();
+
+        switch (option)
+        {
+        case 1:
+        {
+            std::cout << "=======\n";
+            std::cout << "Add Bus\n";
+            std::cout << "=======\n";
+            std::cout << "Any other key - Cancel Operation\n";
+            std::cout << "New Bus Capacity (greater than 0): ";
+
+            int capacity;
+            std::cin >> capacity;
+            if (cin.fail())
+            {
+                capacity = -1;
+                cin.clear();
+                cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            }
+
+            if (capacity > 0)
+            {
+                Bus<T> bus;
+                bus.capacity = capacity;
+                buses.push_back(bus);
+            }
+        }
+        break;
+        case 2:
+        {
+            std::cout << "==========\n";
+            std::cout << "Remove Bus\n";
+            std::cout << "==========\n";
+            std::cout << "Any other key - Cancel Operation\n";
+            std::cout << "Bus Index (0 - " << buses.size() - 1 << "): ";
+
+            std::cin >> index;
+
+            if (!cin.fail() && index >= 0 && index < buses.size())
+            {
+                buses.erase(buses.begin() + index);
+            }
+            else if (cin.fail())
+            {
+                cin.clear();
+                cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            }
+        }
+        break;
+        default:
+            done = true;
+            break;
         }
     }
 }
@@ -306,7 +397,7 @@ void Interface<T>::manageCompanyMenu(Company<T> &company)
                 std::cout << "          Number of Workers: " << stop.number_of_workers << "\n";
             }
         }
-        std::cout << "1 - Add/Update/Remove Bus Stop\n";
+        std::cout << "\n1 - Add/Update/Remove Bus Stop\n";
         std::cout << "Any other key - Back to Companies\n";
         std::cout << "Option: ";
 

@@ -21,7 +21,6 @@
 template <class T>
 struct Bus
 {
-    T id;
     T capacity;
     std::vector<T> path;
 };
@@ -63,7 +62,7 @@ public:
 
     Graph<T> &getGraph();
     T getGarageVertexId() const;
-    std::vector<Bus<T>> getBuses() const;
+    std::vector<Bus<T>> &getBuses();
     std::vector<Company<T>> &getCompanies();
 
     void loadTagsFile();
@@ -93,7 +92,6 @@ Manager<T>::Manager()
     for (unsigned int i = 0; i < capacities.size(); i++)
     {
         Bus<T> bus;
-        bus.id = i;
         bus.capacity = capacities[i];
         buses.push_back(bus);
     }
@@ -112,7 +110,7 @@ T Manager<T>::getGarageVertexId() const
 }
 
 template <class T>
-std::vector<Bus<T>> Manager<T>::getBuses() const
+std::vector<Bus<T>> &Manager<T>::getBuses()
 {
     return this->buses;
 }
@@ -224,7 +222,7 @@ std::vector<Bus<T> *> Manager<T>::getBusesForCompany(Company<T> company, string 
         std::cout << "available buses\n";
         for (auto bus : aux_buses)
         {
-            std::cout << "bus id " << bus->id << " capacity " << bus->capacity << std::endl;
+            std::cout << "capacity " << bus->capacity << std::endl;
         }
 
         // get total number of workers
@@ -281,7 +279,7 @@ std::vector<Bus<T> *> Manager<T>::getBusesForCompany(Company<T> company, string 
     std::cout << "buses for company\n";
     for (auto bus : buses_for_company)
     {
-        std::cout << "bus id " << bus->id << " capacity " << bus->capacity << std::endl;
+        std::cout << "capacity " << bus->capacity << std::endl;
     }
 
     std::cout << "getbusesforcompany end\n";
@@ -555,10 +553,10 @@ void Manager<T>::simulatedAnnealing(Company<T> company, string direction)
     }
     std::cout << "\n";
 
-    std::cout << "BUSES FOR COMPANY ID-CAPACITY\n";
+    std::cout << "BUSES FOR COMPANY CAPACITY\n";
     for (auto bus : buses_for_company)
     {
-        cout << bus->id << "-" << bus->capacity << " ";
+        cout << bus->capacity << " ";
     }
     std::cout << "\n";
 
@@ -610,7 +608,7 @@ void Manager<T>::sortBusesAscendingCapacity()
     std::sort(buses.begin(), buses.end(), greater_capacity<T>);
     for (auto bus : buses)
     {
-        std::cout << "bus id " << bus.id << " capacity " << bus.capacity << std::endl;
+        std::cout << "capacity " << bus.capacity << std::endl;
     }
 }
 
