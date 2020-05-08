@@ -111,8 +111,14 @@ void Interface<T>::chooseMap()
     std::cout << "Any other key - Exit\n\n";
     std::cout << "Option: ";
 
-    unsigned int option;
+    int option;
     std::cin >> option;
+    if (cin.fail())
+    {
+        option = -1;
+        cin.clear();
+        cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    }
 
     string city_name;
 
@@ -168,8 +174,15 @@ void Interface<T>::menu()
         std::cout << "Any other key - Exit\n\n";
         std::cout << "Option: ";
 
-        unsigned int option;
+        int option;
         std::cin >> option;
+        if (cin.fail())
+        {
+            option = -1;
+            cin.clear();
+            cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        }
+        std::cout << "input option " << option << "\n";
 
         switch (option)
         {
@@ -213,7 +226,6 @@ void Interface<T>::menu()
         case 4:
         {
         }
-
         break;
         default:
             done = true;
@@ -245,20 +257,26 @@ void Interface<T>::companiesMenu()
         std::cout << "Any other key - Back To Menu\n\n";
         std::cout << "Option: ";
 
-        unsigned int option;
+        int option;
         cin >> option;
+        if (cin.fail())
+        {
+            option = -1;
+            cin.clear();
+            cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        }
 
         if (option > 0)
         {
-            if (option <= manager->getCompanies().size())
+            if (option <= (int)manager->getCompanies().size())
             {
                 manageCompanyMenu(manager->getCompanies()[option - 1]);
             }
-            else if (option == manager->getCompanies().size() + 1)
+            else if (option == (int)manager->getCompanies().size() + 1)
             {
                 addCompanyMenu();
             }
-            else if (option == manager->getCompanies().size() + 2)
+            else if (option == (int)manager->getCompanies().size() + 2)
             {
                 removeCompanyMenu();
             }
@@ -288,39 +306,101 @@ void Interface<T>::manageCompanyMenu(Company<T> &company)
                 std::cout << "          Number of Workers: " << stop.number_of_workers << "\n";
             }
         }
-        std::cout << "1 - Add/Update Bus Stop\n";
-        std::cout << "2 - Remove Bus Stop\n";
+        std::cout << "1 - Add/Update/Remove Bus Stop\n";
         std::cout << "Any other key - Back to Companies\n";
         std::cout << "Option: ";
 
-        unsigned int option;
+        int option;
         std::cin >> option;
+        if (cin.fail())
+        {
+            option = -1;
+            cin.clear();
+            cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        }
 
         switch (option)
         {
         case 1:
         {
-            std::cout << "========================\n";
-            std::cout << "Add or update a bus stop\n";
-            std::cout << "========================\n";
-            std::cout << "Bus Stop Vertex Id (0 - " << manager->getGraph().getNumVertex() << "): ";
+            std::cout << "=========================\n";
+            std::cout << "Add/Update/Remove a bus stop\n";
+            std::cout << "=========================\n";
+            std::cout << "INSTRUCTIONS:\n";
+            std::cout << "Pick a valid vertex id\n";
+            std::cout << "Choose number of workers\n";
+            std::cout << "Vertex id is a bus stop and number of workers > 0: bus stop will be UPDATED\n";
+            std::cout << "Vertex id is a bus stop and number of workers == 0: bus stop will be REMOVED\n";
+            std::cout << "Vertex id is NOT a bus stop and number of workers > 0: bus stop will be ADDED\n";
+            std::cout << "Vertex id is NOT a bus stop and number of workers == 0: nothing will change\n";
+            std::cout << "\nAny other key - Cancel Operation\n";
+            std::cout << "Bus Stop Vertex Id (0 - " << manager->getGraph().getNumVertex() - 1 << "): ";
 
             int vertex_id;
             std::cin >> vertex_id;
 
-            if(!cin.fail() && vertex_id > 0 && vertex_id < manager->getGraph().getNumVertex()){
-                // check if company already has bus stop with the same vertex id
-                
-            }
+            if (!cin.fail() && vertex_id >= 0 && vertex_id < manager->getGraph().getNumVertex())
+            {
+                std::cout << "\nAny other key - Cancel Operation";
+                std::cout << "\nNumber of workers: ";
+                int number_of_workers;
+                std::cin >> number_of_workers;
+                if (cin.fail())
+                {
+                    number_of_workers = -1;
+                    cin.clear();
+                    cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                }
 
-            std::cout << "\nNumber of workers: ";
-            
+                if (number_of_workers >= 0)
+                {
+                    // check if company already has bus stop with the same vertex id
+                    unsigned int index = 0;
+                    std::vector<Stop<T>> &company_bus_stops = company.getBusStops();
+                    for (auto &stop : company_bus_stops)
+                    {
+                        // if company already has bus stop with the same vertex id
+                        if (stop.vertex_id == vertex_id)
+                        {
+                            break;
+                        }
+
+                        ++index;
+                    }
+
+                    if (index < company_bus_stops.size())
+                    {
+                        // update bus stop
+                        if (number_of_workers > 0)
+                        {
+                            company_bus_stops[index].number_of_workers = number_of_workers;
+                        }
+                        // remove bus stop
+                        else if (number_of_workers == 0)
+                        {
+                            company_bus_stops.erase(company_bus_stops.begin() + index);
+                        }
+                    }
+                    else
+                    {
+                        // add new bus stop
+                        if (number_of_workers > 0)
+                        {
+                            Stop<T> stop;
+                            stop.vertex_id = vertex_id;
+                            stop.number_of_workers = number_of_workers;
+                            company_bus_stops.push_back(stop);
+                        }
+                    }
+                }
+            }
+            else if (cin.fail())
+            {
+                cin.clear();
+                cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            }
         }
         break;
-        case 2:
-            break;
-        case 3:
-            break;
         default:
             done = true;
             break;
