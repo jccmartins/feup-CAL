@@ -278,8 +278,6 @@ void Graph<T>::loadNodesAndEdges(string city_name)
 	{
 		nodes_filename = "resources/Mapas-20200424/GridGraphs/16x16/nodes.txt";
 		edges_filename = "resources/Mapas-20200424/GridGraphs/16x16/edges.txt";
-
-		edgeType = EdgeType::UNDIRECTED; // UNDIRECTED com grids, DIRECTED com maps
 	}
 	else
 	{
@@ -288,9 +286,11 @@ void Graph<T>::loadNodesAndEdges(string city_name)
 
 		nodes_filename = "resources/Mapas-20200424/PortugalMaps/PortugalMaps/" + city_name + "/nodes_x_y_" + city_name_lowercase + ".txt";
 		edges_filename = "resources/Mapas-20200424/PortugalMaps/PortugalMaps/" + city_name + "/edges_" + city_name_lowercase + ".txt";
-
-		edgeType = EdgeType::DIRECTED; // UNDIRECTED com grids, DIRECTED com maps
 	}
+
+	// UNDIRECTED com grids, DIRECTED com maps
+	// professor deu-nos permissao para usar UNDIRECTED em todos os mapas devido à má conetividade
+	edgeType = EdgeType::UNDIRECTED;
 
 	nodes.open(nodes_filename);
 	if (!nodes.good())
@@ -365,7 +365,7 @@ void Graph<T>::drawGraph(GraphViewer *gv)
 		}
 
 		gv->addNode(vertex->info, vertex->x - relative_x, vertex->y - relative_y);
-		gv->setVertexLabel(vertex->info, std::to_string(vertex->info));
+		gv->setVertexSize(vertex->info, 16);
 	}
 
 	// add edges

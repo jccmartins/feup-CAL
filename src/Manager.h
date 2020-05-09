@@ -312,15 +312,19 @@ double probability(double delta_distance, double temperature)
 template <class T>
 std::vector<Stop<T>> randomNeighbour(std::vector<Stop<T>> bus_stops)
 {
-    unsigned int index1, index2;
-    do
+    if (bus_stops.size() > 1)
     {
-        index1 = rand() % (bus_stops.size());
-        index2 = rand() % (bus_stops.size());
-    } while (index1 == index2);
-    std::cout << "index1 " << index1 << std::endl;
-    std::cout << "index2 " << index2 << std::endl;
-    std::swap(bus_stops[index1], bus_stops[index2]);
+        unsigned int index1, index2;
+        do
+        {
+            index1 = rand() % (bus_stops.size());
+            index2 = rand() % (bus_stops.size());
+        } while (index1 == index2);
+        std::cout << "index1 " << index1 << std::endl;
+        std::cout << "index2 " << index2 << std::endl;
+        std::swap(bus_stops[index1], bus_stops[index2]);
+    }
+
     return bus_stops;
 }
 

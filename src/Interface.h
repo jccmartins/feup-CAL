@@ -29,8 +29,8 @@ public:
     Interface(Manager<T> *manager);
 
     void openGraphViewerWindow() const;
-    void setGarageColorAndLabel() const;
-    void setLocationsColorsAndLabels(Company<T> company) const;
+    void setGarageColor() const;
+    void setLocationsColors(Company<T> company) const;
     void chooseMap();
     void initializeGraphViewer();
     void pickGarageVertexId();
@@ -41,8 +41,9 @@ public:
     void addCompanyMenu();
     void removeCompanyMenu();
     void printBusesRoutes(Company<T> company) const;
-    void resetVerticesColorAndLabel() const;
+    void resetVerticesColor() const;
     void manageBuses();
+    int getVertexIndex(int vertex_id) const;
 };
 
 /**
@@ -70,41 +71,42 @@ void Interface<T>::openGraphViewerWindow() const
 }
 
 template <class T>
-void Interface<T>::setGarageColorAndLabel() const
+void Interface<T>::setGarageColor() const
 {
-    // set garage vertex color
-    unsigned int garage = manager->getGarageVertexId();
-    std::cout << "Garage: " << garage << endl;
-    gv->setVertexColor(garage, GARAGE_COLOR);
-    std::string garage_label = "GARAGE - " + std::to_string(garage);
-    gv->setVertexLabel(garage, garage_label);
+    if (gv != NULL)
+    {
+        // set garage vertex color
+        unsigned int garage = manager->getGarageVertexId();
+        std::cout << "Garage: " << garage << endl;
+        gv->setVertexColor(garage, GARAGE_COLOR);
 
-    gv->rearrange();
+        gv->rearrange();
+    }
 }
 
 /**
  * Set colors for companies, garage and bus stops vertices
  */
 template <class T>
-void Interface<T>::setLocationsColorsAndLabels(Company<T> company) const
+void Interface<T>::setLocationsColors(Company<T> company) const
 {
-    // set company vertex color
-    std::cout << "Company: " << company.name << " vertex id: " << company.company_vertex_id << endl;
-    gv->setVertexColor(company.company_vertex_id, COMPANY_COLOR);
-    std::string company_label = company.name + " - " + std::to_string(company.company_vertex_id);
-    std::cout << "label " << company_label << endl;
-    gv->setVertexLabel(company.company_vertex_id, company_label);
-
-    // set bus stops vertices color
-    vector<Stop<int>> bus_stops = company.bus_stops;
-    cout << "Bus stops: \n";
-    for (auto stop : bus_stops)
+    if (gv != NULL)
     {
-        cout << stop.vertex_id << " " << stop.number_of_workers << std::endl;
-        gv->setVertexColor(stop.vertex_id, BUS_STOP_COLOR);
-    }
+        // set company vertex color
+        std::cout << "Company: " << company.name << " vertex id: " << company.company_vertex_id << endl;
+        gv->setVertexColor(company.company_vertex_id, COMPANY_COLOR);
 
-    gv->rearrange();
+        // set bus stops vertices color
+        vector<Stop<int>> bus_stops = company.bus_stops;
+        cout << "Bus stops: \n";
+        for (auto stop : bus_stops)
+        {
+            cout << stop.vertex_id << " " << stop.number_of_workers << std::endl;
+            gv->setVertexColor(stop.vertex_id, BUS_STOP_COLOR);
+        }
+
+        gv->rearrange();
+    }
 }
 
 template <class T>
@@ -114,8 +116,20 @@ void Interface<T>::chooseMap()
     std::cout << "BosHBus: Workers Transportation\n";
     std::cout << "===============================\n";
     std::cout << "Choose a map:\n";
-    std::cout << "1 - Porto\n";
-    std::cout << "2 - 16x16 Grid for testing purposes\n";
+    std::cout << "1 - Aveiro\n";
+    std::cout << "2 - Braga\n";
+    std::cout << "3 - Coimbra\n";
+    std::cout << "4 - Ermesinde\n";
+    std::cout << "5 - Fafe\n";
+    std::cout << "6 - Gondomar\n";
+    std::cout << "7 - Lisboa\n";
+    std::cout << "8 - Maia\n";
+    std::cout << "9 - Porto\n";
+    std::cout << "10 - Viseu\n\n";
+
+    std::cout << "11 - Portugal\n\n";
+
+    std::cout << "12 - 16x16 Grid for testing purposes\n";
     std::cout << "Any other key - Exit\n\n";
     std::cout << "Option: ";
 
@@ -133,9 +147,39 @@ void Interface<T>::chooseMap()
     switch (option)
     {
     case 1:
-        city_name = "Porto";
+        city_name = "Aveiro";
         break;
     case 2:
+        city_name = "Braga";
+        break;
+    case 3:
+        city_name = "Coimbra";
+        break;
+    case 4:
+        city_name = "Ermesinde";
+        break;
+    case 5:
+        city_name = "Fafe";
+        break;
+    case 6:
+        city_name = "Gondomar";
+        break;
+    case 7:
+        city_name = "Lisboa";
+        break;
+    case 8:
+        city_name = "Maia";
+        break;
+    case 9:
+        city_name = "Porto";
+        break;
+    case 10:
+        city_name = "Viseu";
+        break;
+    case 11:
+        city_name = "Portugal";
+        break;
+    case 12:
         city_name = "testing";
     default:
         break;
@@ -164,13 +208,13 @@ void Interface<T>::pickGarageVertexId()
     bool done = false;
     while (!done)
     {
-        std::cout << "Garage Vertex Id (0 - " << manager->getGraph().getNumVertex() - 1 << "): ";
+        std::cout << "Garage Vertex Id Index (0 - " << manager->getGraph().getNumVertex() - 1 << "): ";
 
         int index;
         std::cin >> index;
         if (!cin.fail() && index >= 0 && index < manager->getGraph().getNumVertex())
         {
-            manager->getGarageVertexId() = index;
+            manager->getGarageVertexId() = manager->getGraph().getVertexSet()[index]->getInfo();
             done = true;
         }
         else
@@ -238,11 +282,17 @@ void Interface<T>::menu()
         std::cout << "===============================\n";
         std::cout << "BosHBus: Workers Transportation\n";
         std::cout << "===============================\n";
+        std::cout << "Map Colors:\n";
+        std::cout << "Garage: Cyan\n";
+        std::cout << "Company Bus Stops: Orange\n";
+        std::cout << "Company: Green\n\n";
         std::cout << "OPTIONS:\n";
         std::cout << "1 - Open Map\n";
         std::cout << "2 - View routes\n";
         std::cout << "3 - Manage Companies\n";
         std::cout << "4 - Manage Buses\n";
+        std::cout << "5 - Show Vertices Label\n";
+        std::cout << "6 - Hide Vertices Label\n";
         std::cout << "Any other key - Exit\n\n";
         std::cout << "Option: ";
 
@@ -265,7 +315,7 @@ void Interface<T>::menu()
             }
             openGraphViewerWindow();
             manager->getGraph().drawGraph(gv);
-            setGarageColorAndLabel();
+            setGarageColor();
         }
         break;
         case 2:
@@ -278,7 +328,7 @@ void Interface<T>::menu()
             {
                 if (company.bus_stops.size() > 0)
                 {
-                    setLocationsColorsAndLabels(company);
+                    setLocationsColors(company);
 
                     std::cout << "To work:\n";
                     distance = manager->simulatedAnnealing(company, "company");
@@ -292,7 +342,7 @@ void Interface<T>::menu()
                     }
 
                     std::cout << "Back home:\n";
-                    setLocationsColorsAndLabels(company);
+                    setLocationsColors(company);
                     distance = manager->simulatedAnnealing(company, "garage");
                     if (distance == -1)
                     {
@@ -303,9 +353,9 @@ void Interface<T>::menu()
                         printBusesRoutes(company);
                     }
 
-                    // reset colors and labels
-                    resetVerticesColorAndLabel();
-                    setGarageColorAndLabel();
+                    // reset colors
+                    resetVerticesColor();
+                    setGarageColor();
                 }
             }
         }
@@ -318,6 +368,32 @@ void Interface<T>::menu()
         case 4:
         {
             manageBuses();
+        }
+        break;
+        case 5:
+        {
+            if (gv != NULL)
+            {
+                int i = 0;
+                for (auto *vertex : manager->getGraph().getVertexSet())
+                {
+                    gv->setVertexLabel(vertex->getInfo(), std::to_string(i));
+                    ++i;
+                }
+                gv->rearrange();
+            }
+        }
+        break;
+        case 6:
+        {
+            if (gv != NULL)
+            {
+                for (auto *vertex : manager->getGraph().getVertexSet())
+                {
+                    gv->clearVertexLabel(vertex->getInfo());
+                }
+                gv->rearrange();
+            }
         }
         break;
         default:
@@ -475,16 +551,17 @@ void Interface<T>::manageCompanyMenu(Company<T> &company)
     while (!done)
     {
         std::cout << "Company: " << company.name << "\n";
-        std::cout << "  Location Vertex Id: " << company.company_vertex_id << "\n";
+        std::cout << "  Location Vertex Id: " << getVertexIndex(company.company_vertex_id) << "\n";
         std::cout << "  Bus Stops:\n";
         for (auto &stop : company.bus_stops)
         {
             std::cout << "      Stop:\n";
-            std::cout << "          Vertex Id: " << stop.vertex_id << "\n";
+            std::cout << "          Vertex Id: " << getVertexIndex(stop.vertex_id) << "\n";
             std::cout << "          Number of Workers: " << stop.number_of_workers << "\n";
         }
 
         std::cout << "\n1 - Add/Update/Remove Bus Stop\n";
+        std::cout << "2 - Update Company Location Vertex Id\n";
         std::cout << "Any other key - Back to Companies\n";
         std::cout << "Option: ";
 
@@ -512,12 +589,12 @@ void Interface<T>::manageCompanyMenu(Company<T> &company)
             std::cout << "Vertex id is NOT a bus stop and number of workers > 0: bus stop will be ADDED\n";
             std::cout << "Vertex id is NOT a bus stop and number of workers == 0: nothing will change\n";
             std::cout << "\nAny other key - Cancel Operation\n";
-            std::cout << "Bus Stop Vertex Id (0 - " << manager->getGraph().getNumVertex() - 1 << "): ";
+            std::cout << "Bus Stop Vertex Id Index (0 - " << manager->getGraph().getNumVertex() - 1 << "): ";
 
-            int vertex_id;
-            std::cin >> vertex_id;
+            int vertex_index;
+            std::cin >> vertex_index;
 
-            if (!cin.fail() && vertex_id >= 0 && vertex_id < manager->getGraph().getNumVertex())
+            if (!cin.fail() && vertex_index >= 0 && vertex_index < manager->getGraph().getNumVertex())
             {
                 std::cout << "\nAny other key - Cancel Operation";
                 std::cout << "\nNumber of workers: ";
@@ -538,7 +615,7 @@ void Interface<T>::manageCompanyMenu(Company<T> &company)
                     for (auto &stop : company_bus_stops)
                     {
                         // if company already has bus stop with the same vertex id
-                        if (stop.vertex_id == vertex_id)
+                        if (getVertexIndex(stop.vertex_id) == vertex_index)
                         {
                             break;
                         }
@@ -565,12 +642,34 @@ void Interface<T>::manageCompanyMenu(Company<T> &company)
                         if (number_of_workers > 0)
                         {
                             Stop<T> stop;
-                            stop.vertex_id = vertex_id;
+                            stop.vertex_id = manager->getGraph().getVertexSet()[vertex_index]->getInfo();
                             stop.number_of_workers = number_of_workers;
                             company_bus_stops.push_back(stop);
                         }
                     }
                 }
+            }
+            else if (cin.fail())
+            {
+                cin.clear();
+                cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            }
+        }
+        break;
+        case 2:
+        {
+            std::cout << "=======================\n";
+            std::cout << "Update Company Location\n";
+            std::cout << "=======================\n";
+            std::cout << "\nAny other key - Cancel Operation\n";
+            std::cout << "New Company Location Vertex Id Index (0 - " << manager->getGraph().getNumVertex() - 1 << "): ";
+
+            int vertex_index;
+            std::cin >> vertex_index;
+
+            if (!cin.fail() && vertex_index >= 0 && vertex_index < manager->getGraph().getNumVertex())
+            {
+                company.company_vertex_id = manager->getGraph().getVertexSet()[vertex_index]->getInfo();
             }
             else if (cin.fail())
             {
@@ -598,15 +697,15 @@ void Interface<T>::addCompanyMenu()
     cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     std::getline(std::cin, name);
 
-    std::cout << "New company Vertex Id (0 - " << manager->getGraph().getNumVertex() - 1 << "): ";
-    int company_vertex_id;
-    std::cin >> company_vertex_id;
+    std::cout << "New company Vertex Id Index (0 - " << manager->getGraph().getNumVertex() - 1 << "): ";
+    int company_vertex_index;
+    std::cin >> company_vertex_index;
 
-    if (!cin.fail() && company_vertex_id >= 0 && company_vertex_id < manager->getGraph().getNumVertex())
+    if (!cin.fail() && company_vertex_index >= 0 && company_vertex_index < manager->getGraph().getNumVertex())
     {
         Company<T> company;
         company.name = name;
-        company.company_vertex_id = company_vertex_id;
+        company.company_vertex_id = manager->getGraph().getVertexSet()[company_vertex_index]->getInfo();
         manager->getCompanies().push_back(company);
     }
     else if (cin.fail())
@@ -643,55 +742,78 @@ void Interface<T>::removeCompanyMenu()
 template <class T>
 void Interface<T>::printBusesRoutes(Company<T> company) const
 {
-    for (Bus<int> bus : manager->getBuses())
+    if (gv != NULL)
     {
-        if (!bus.path.empty())
+        for (Bus<int> bus : manager->getBuses())
         {
-            if (bus.path[0] == company.company_vertex_id ||
-                bus.path[bus.path.size() - 1] == company.company_vertex_id)
+            if (!bus.path.empty())
             {
-                std::cout << "bus capacity " << bus.capacity << std::endl;
-                std::cout << "bus path size " << bus.path.size() << std::endl;
-                for (unsigned int i = 0; i + 1 < bus.path.size(); i++)
+                if (bus.path[0] == company.company_vertex_id ||
+                    bus.path[bus.path.size() - 1] == company.company_vertex_id)
                 {
-                    std::cout << bus.path[i] << " ";
-                    if (i + 2 == bus.path.size())
+                    std::cout << "bus capacity " << bus.capacity << std::endl;
+                    std::cout << "bus path size " << bus.path.size() << std::endl;
+                    for (unsigned int i = 0; i + 1 < bus.path.size(); i++)
                     {
-                        std::cout << bus.path[i + 1] << " ";
+                        std::cout << bus.path[i] << " ";
+                        if (i + 2 == bus.path.size())
+                        {
+                            std::cout << bus.path[i + 1] << " ";
+                        }
+                        manager->getGraph().dijkstraShortestPath(bus.path[i]);
+                        manager->getGraph().getPathTo(bus.path[i + 1]);
+                        Vertex<int> *vertex = manager->getGraph().findVertex(bus.path[i + 1]);
+                        Vertex<int> *path = vertex->getPath();
+                        while (path->getPath() != NULL)
+                        {
+                            gv->setVertexColor(path->getInfo(), RED);
+                            path = path->getPath();
+                        }
                     }
-                    manager->getGraph().dijkstraShortestPath(bus.path[i]);
-                    manager->getGraph().getPathTo(bus.path[i + 1]);
-                    Vertex<int> *vertex = manager->getGraph().findVertex(bus.path[i + 1]);
-                    Vertex<int> *path = vertex->getPath();
-                    while (path->getPath() != NULL)
-                    {
-                        gv->setVertexColor(path->getInfo(), RED);
-                        path = path->getPath();
-                    }
-                }
-                std::cout << "\n";
-                gv->rearrange();
-                getchar();
+                    std::cout << "\n";
+                    gv->rearrange();
+                    getchar();
 
-                // reset colors and labels
-                resetVerticesColorAndLabel();
-                setGarageColorAndLabel();
-                setLocationsColorsAndLabels(company);
+                    // reset colors
+                    resetVerticesColor();
+                    setGarageColor();
+                    setLocationsColors(company);
+                }
             }
         }
     }
 }
 
 template <class T>
-void Interface<T>::resetVerticesColorAndLabel() const
+void Interface<T>::resetVerticesColor() const
 {
-    for (Vertex<T> *vertex : manager->getGraph().getVertexSet())
+    if (gv != NULL)
     {
-        gv->setVertexColor(vertex->getInfo(), VERTEX_COLOR);
-        gv->setVertexLabel(vertex->getInfo(), std::to_string(vertex->getInfo()));
+        int index = 0;
+        for (Vertex<T> *vertex : manager->getGraph().getVertexSet())
+        {
+            gv->setVertexColor(vertex->getInfo(), VERTEX_COLOR);
+            ++index;
+        }
+
+        gv->rearrange();
+    }
+}
+
+template <class T>
+int Interface<T>::getVertexIndex(int vertex_id) const
+{
+    int index = 0;
+    for (auto *vertex : manager->getGraph().getVertexSet())
+    {
+        if (vertex->getInfo() == vertex_id)
+        {
+            return index;
+        }
+        ++index;
     }
 
-    gv->rearrange();
+    return -1;
 }
 
 #endif /* INTERFACE_H_ */
