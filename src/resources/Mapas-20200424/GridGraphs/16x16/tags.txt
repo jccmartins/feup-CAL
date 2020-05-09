@@ -1,7 +1,4 @@
-3
-bus=garage
-1
-0
+2
 company=BosH
 1
 260
