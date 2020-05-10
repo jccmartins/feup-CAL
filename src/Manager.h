@@ -17,10 +17,13 @@
 
 #include "Graph.h"
 
+int global_bus_id = 0;
+
 /************************* Bus  **************************/
 template <class T>
 struct Bus
 {
+    T id;
     T capacity;
     std::vector<T> path;
 };
@@ -56,13 +59,6 @@ struct pair_hash
         return h1 ^ h2;
     }
 };
-
-// template <class T>
-// bool operator==(const std::pair<T, T> &p1, const std::pair<T, T> &p2)
-// {
-//     std::cout << "operator overloading\n";
-//     return (p1.first == p2.first && p1.second == p2.second);
-// }
 
 /************************* Manager  **************************/
 
@@ -121,7 +117,7 @@ std::vector<Company<T>> &Manager<T>::getCompanies()
 }
 
 /**
- * Load companies, garage and bus stops vertices
+ * Load companies, garage and bus stops vertices for 16x16 grid testing example
 */
 template <class T>
 void Manager<T>::loadTagsFile()
@@ -148,23 +144,18 @@ void Manager<T>::loadTagsFile()
     iss >> n_tags;
 
     // load tags
-    std::cout << "ntags " << n_tags << std::endl;
     for (unsigned int i = 0; i < n_tags; i++)
     {
         std::getline(tags, line);
         iss.str(line);
         iss >> tag_id;
-        std::cout << "tagid " << tag_id << std::endl;
 
         std::getline(tags, line);
         sscanf(line.c_str(), "%d", &n_nodes);
-        std::cout << "nnodes " << n_nodes << std::endl;
         for (unsigned int j = 0; j < n_nodes; j++)
         {
             std::getline(tags, line);
             sscanf(line.c_str(), "%d", &node_id);
-
-            std::cout << "node_id " << node_id << std::endl;
 
             if (tag_id.substr(0, tag1.length()) == tag1)
             {
@@ -173,7 +164,6 @@ void Manager<T>::loadTagsFile()
             else if (tag_id.substr(0, tag2.length()) == tag2)
             {
                 std::string name = tag_id.substr(tag2.length(), tag_id.length());
-                std::cout << "name " << name << std::endl;
 
                 Company<T> company;
                 company.name = name;
@@ -182,24 +172,20 @@ void Manager<T>::loadTagsFile()
             }
             else if (tag_id.substr(0, tag3.length()) == tag3)
             {
-                std::cout << "busstop\n";
                 iss.str(line);
                 Stop<T> stop;
                 iss >> stop.vertex_id;
                 iss >> stop.number_of_workers;
-                std::cout << "stop vertex " << stop.vertex_id << " n workers " << stop.number_of_workers << std::endl;
                 this->companies[this->companies.size() - 1].bus_stops.push_back(stop);
             }
         }
     }
-    std::cout << "end\n";
 }
 
 /************************* ALGORITHMS  **************************/
 template <class T>
 std::vector<Bus<T> *> Manager<T>::getBusesForCompany(Company<T> company, string direction)
 {
-    std::cout << "getbusesforcompany begin\n";
     std::vector<Bus<T> *> buses_for_company;
 
     if (direction == "company")
@@ -221,20 +207,12 @@ std::vector<Bus<T> *> Manager<T>::getBusesForCompany(Company<T> company, string 
             }
         }
 
-        std::cout << "available buses\n";
-        for (auto bus : aux_buses)
-        {
-            std::cout << "capacity " << bus->capacity << std::endl;
-        }
-
         // get total number of workers
         int number_of_workers = 0;
         for (auto stop : bus_stops)
         {
-            std::cout << "stop n workers " << stop.number_of_workers << std::endl;
             number_of_workers += stop.number_of_workers;
         }
-        std::cout << "num workers TOTAL " << number_of_workers << std::endl;
 
         // get total capacity of all available buses
         int total_capacity = 0;
@@ -242,7 +220,7 @@ std::vector<Bus<T> *> Manager<T>::getBusesForCompany(Company<T> company, string 
         {
             total_capacity += bus->capacity;
         }
-        std::cout << "available buses total capacity " << total_capacity << std::endl;
+
         // if available buses can provide the service
         if (number_of_workers <= total_capacity)
         {
@@ -254,7 +232,6 @@ std::vector<Bus<T> *> Manager<T>::getBusesForCompany(Company<T> company, string 
                     if (aux_buses[i]->capacity >= number_of_workers || i == aux_buses.size() - 1)
                     {
                         number_of_workers -= aux_buses[i]->capacity;
-                        std::cout << "num workers " << number_of_workers << std::endl;
                         buses_for_company.push_back(aux_buses[i]);
                         aux_buses.erase(aux_buses.begin() + i);
                         break;
@@ -278,14 +255,6 @@ std::vector<Bus<T> *> Manager<T>::getBusesForCompany(Company<T> company, string 
         }
     }
 
-    std::cout << "buses for company\n";
-    for (auto bus : buses_for_company)
-    {
-        std::cout << "capacity " << bus->capacity << std::endl;
-    }
-
-    std::cout << "getbusesforcompany end\n";
-
     return buses_for_company;
 }
 
@@ -305,7 +274,6 @@ double probability(double delta_distance, double temperature)
      * which means that as the temperature reaches 0 
      * the algorithm will behave similar to hill climbing (only changing to better solutions)
     */
-    std::cout << "delta distance " << delta_distance << " temperature " << temperature << "\n";
     return (1 / (1 + exp(delta_distance / temperature)));
 }
 
@@ -320,8 +288,6 @@ std::vector<Stop<T>> randomNeighbour(std::vector<Stop<T>> bus_stops)
             index1 = rand() % (bus_stops.size());
             index2 = rand() % (bus_stops.size());
         } while (index1 == index2);
-        std::cout << "index1 " << index1 << std::endl;
-        std::cout << "index2 " << index2 << std::endl;
         std::swap(bus_stops[index1], bus_stops[index2]);
     }
 
@@ -345,10 +311,7 @@ std::vector<vector<T>> getBusesPaths(std::vector<Stop<T>> bus_stops, std::vector
         bus_capacity = buses[i]->capacity;
         while (bus_capacity > 0)
         {
-            // std::cout << "vertex " << bus_stops[0].vertex_id << std::endl;
-            // std::cout << "bus capacity " << bus_capacity << " num workers " << bus_stops[0].number_of_workers << std::endl;
             bus_capacity -= bus_stops[0].number_of_workers;
-            // std::cout << "new bus capacity " << bus_capacity << std::endl;
             buses_paths[i].push_back(bus_stops[0].vertex_id);
             if (bus_capacity < 0)
             {
@@ -489,15 +452,6 @@ std::unordered_map<std::pair<T, T>, double, pair_hash> Manager<T>::getBusStopsDi
         }
     }
 
-    unsigned int i = 0;
-    for (auto &entry : distances)
-    {
-        std::cout << "iter " << i << " ";
-        std::cout << "first " << entry.first.first << " second " << entry.first.second << " ";
-        std::cout << " distance " << entry.second << std::endl;
-        ++i;
-    }
-
     return distances;
 }
 
@@ -514,8 +468,6 @@ double Manager<T>::simulatedAnnealing(Company<T> company, string direction)
     std::unordered_map<std::pair<int, int>, double, pair_hash> distances;
 
     std::vector<Bus<T> *> buses_for_company = getBusesForCompany(company, direction);
-    std::cout << "Company " << company.name << ":\n";
-    getchar();
     if (buses_for_company.empty())
     {
         std::cout << "Not enough buses to provide transportation to " << company.name << " workers\n";
@@ -524,72 +476,30 @@ double Manager<T>::simulatedAnnealing(Company<T> company, string direction)
     {
         bus_stops = company.bus_stops;
         distances = getBusStopsDistances(this->garage_vertex_id, bus_stops, company.company_vertex_id, direction);
-        getchar();
-        std::cout << "Buses pathes\n";
-        for (auto vector : getBusesPaths(bus_stops, buses_for_company))
-        {
-            for (auto elem : vector)
-            {
-                std::cout << elem << " ";
-            }
-            std::cout << "\n";
-        }
         current_distance = distance(bus_stops, buses_for_company, company.company_vertex_id, &distances, direction);
-        std::cout << std::endl;
         // temperature initial value
         temperature = num_iterations * temperature_decrease_rate;
-        std::cout << "temp dec rate " << temperature_decrease_rate << std::endl;
         for (unsigned int i = 0; i < num_iterations; i++)
         {
-            std::cout << "old bus stops\n";
-            for (auto stop : bus_stops)
-            {
-                std::cout << stop.vertex_id << " ";
-            }
-            std::cout << std::endl;
             new_bus_stops = randomNeighbour(bus_stops);
-            std::cout << "NEW bus stops\n";
-            for (auto stop : new_bus_stops)
-            {
-                std::cout << stop.vertex_id << " ";
-            }
-            std::cout << std::endl;
             new_distance = distance(new_bus_stops, buses_for_company, company.company_vertex_id, &distances, direction);
             if (new_distance != -1)
             {
                 delta_distance = new_distance - current_distance;
                 r = ((double)rand() / (RAND_MAX));
                 prob = probability(delta_distance, temperature);
-                std::cout << "r " << r << std::endl;
-                std::cout << "prob " << prob << std::endl;
                 if (r <= prob)
                 {
                     bus_stops = new_bus_stops;
                     current_distance = new_distance;
                 }
             }
-            std::cout << "temperature " << temperature << std::endl;
             temperature -= temperature_decrease_rate;
         }
     }
 
-    std::cout << "STOPS\n";
-    for (auto stop : bus_stops)
-    {
-        std::cout << stop.vertex_id << " ";
-    }
-    std::cout << "\n";
-
-    std::cout << "BUSES FOR COMPANY CAPACITY\n";
-    for (auto bus : buses_for_company)
-    {
-        cout << bus->capacity << " ";
-    }
-    std::cout << "\n";
-
     // attribute paths to buses
     std::vector<vector<T>> buses_paths = getBusesPaths(bus_stops, buses_for_company);
-    std::cout << "BUSES PATHS\n";
     for (unsigned int i = 0; i < buses_for_company.size(); i++)
     {
         if (direction == "company")
@@ -603,19 +513,8 @@ double Manager<T>::simulatedAnnealing(Company<T> company, string direction)
             buses_paths[i].push_back(this->garage_vertex_id);
         }
 
-        for (auto elem : buses_paths[i])
-        {
-            std::cout << elem << " ";
-        }
-        std::cout << "\n";
-
         buses_for_company[i]->path = buses_paths[i];
     }
-
-    std::cout << "total distance: " << current_distance << "\n";
-
-    std::cout << "PRESS ANY KEY\n";
-    getchar();
 
     return current_distance;
 }
@@ -635,10 +534,6 @@ void Manager<T>::sortBusesAscendingCapacity()
 {
     // sort buses in ascending order of capacity
     std::sort(buses.begin(), buses.end(), greater_capacity<T>);
-    for (auto bus : buses)
-    {
-        std::cout << "capacity " << bus.capacity << std::endl;
-    }
 }
 
 #endif /* MANAGER_H_ */

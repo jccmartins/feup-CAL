@@ -35,12 +35,13 @@ public:
     void initializeGraphViewer();
     void pickGarageVertexId();
     void setFirstBus();
+    void changeGarageVertexId();
     void menu();
     void companiesMenu();
     void manageCompanyMenu(Company<T> &company);
     void addCompanyMenu();
     void removeCompanyMenu();
-    void printBusesRoutes(Company<T> company) const;
+    void printAndDrawBusesRoutes(Company<T> company) const;
     void resetVerticesColor() const;
     void manageBuses();
     int getVertexIndex(int vertex_id) const;
@@ -77,7 +78,6 @@ void Interface<T>::setGarageColor() const
     {
         // set garage vertex color
         unsigned int garage = manager->getGarageVertexId();
-        std::cout << "Garage: " << garage << endl;
         gv->setVertexColor(garage, GARAGE_COLOR);
 
         gv->rearrange();
@@ -93,15 +93,12 @@ void Interface<T>::setLocationsColors(Company<T> company) const
     if (gv != NULL)
     {
         // set company vertex color
-        std::cout << "Company: " << company.name << " vertex id: " << company.company_vertex_id << endl;
         gv->setVertexColor(company.company_vertex_id, COMPANY_COLOR);
 
         // set bus stops vertices color
         vector<Stop<int>> bus_stops = company.bus_stops;
-        cout << "Bus stops: \n";
         for (auto stop : bus_stops)
         {
-            cout << stop.vertex_id << " " << stop.number_of_workers << std::endl;
             gv->setVertexColor(stop.vertex_id, BUS_STOP_COLOR);
         }
 
@@ -129,7 +126,7 @@ void Interface<T>::chooseMap()
 
     std::cout << "11 - Portugal\n\n";
 
-    std::cout << "12 - 16x16 Grid for testing purposes\n";
+    std::cout << "12 - 16x16 Grid for testing purposes\n\n";
     std::cout << "Any other key - Exit\n\n";
     std::cout << "Option: ";
 
@@ -139,8 +136,8 @@ void Interface<T>::chooseMap()
     {
         option = -1;
         cin.clear();
-        cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
+    cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
     string city_name;
 
@@ -222,11 +219,11 @@ void Interface<T>::pickGarageVertexId()
             if (cin.fail())
             {
                 cin.clear();
-                cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             }
 
             std::cout << "You must pick a valid garage vertex id\n";
         }
+        cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
 }
 
@@ -243,6 +240,8 @@ void Interface<T>::setFirstBus()
         if (!cin.fail() && capacity > 0)
         {
             Bus<T> bus;
+            bus.id = global_bus_id;
+            ++global_bus_id;
             bus.capacity = capacity;
             manager->getBuses().push_back(bus);
             done = true;
@@ -252,11 +251,11 @@ void Interface<T>::setFirstBus()
             if (cin.fail())
             {
                 cin.clear();
-                cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             }
 
             std::cout << "You must pick a valid bus capacity\n";
         }
+        cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
 }
 
@@ -291,8 +290,9 @@ void Interface<T>::menu()
         std::cout << "2 - View routes\n";
         std::cout << "3 - Manage Companies\n";
         std::cout << "4 - Manage Buses\n";
-        std::cout << "5 - Show Vertices Label\n";
-        std::cout << "6 - Hide Vertices Label\n";
+        std::cout << "5 - Show Vertices Label on Map Window\n";
+        std::cout << "6 - Hide Vertices Label on Map Window\n";
+        std::cout << "7 - Change Garage Location (" << manager->getGarageVertexId() << ")\n";
         std::cout << "Any other key - Exit\n\n";
         std::cout << "Option: ";
 
@@ -302,8 +302,8 @@ void Interface<T>::menu()
         {
             option = -1;
             cin.clear();
-            cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         }
+        cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
         switch (option)
         {
@@ -326,6 +326,7 @@ void Interface<T>::menu()
             double distance;
             for (auto &company : manager->getCompanies())
             {
+                std::cout << "\nCompany: " << company.name << "\n";
                 if (company.bus_stops.size() > 0)
                 {
                     setLocationsColors(company);
@@ -338,7 +339,8 @@ void Interface<T>::menu()
                     }
                     else
                     {
-                        printBusesRoutes(company);
+                        std::cout << "Total Distance: " << distance << "\n";
+                        printAndDrawBusesRoutes(company);
                     }
 
                     std::cout << "Back home:\n";
@@ -350,14 +352,23 @@ void Interface<T>::menu()
                     }
                     else
                     {
-                        printBusesRoutes(company);
+                        std::cout << "Total Distance: " << distance << "\n";
+                        printAndDrawBusesRoutes(company);
                     }
 
                     // reset colors
                     resetVerticesColor();
                     setGarageColor();
                 }
+                else
+                {
+                    std::cout << "This company has no bus stops\n";
+                }
+                std::cout << "\n";
             }
+
+            std::cout << "PRESS ENTER TO GO BACK TO MENU";
+            getchar();
         }
         break;
         case 3:
@@ -396,10 +407,39 @@ void Interface<T>::menu()
             }
         }
         break;
+        case 7:
+        {
+            changeGarageVertexId();
+        }
+        break;
         default:
             done = true;
         }
     }
+}
+
+template <class T>
+void Interface<T>::changeGarageVertexId()
+{
+    std::cout << "======================\n";
+    std::cout << "Change Garage Location\n";
+    std::cout << "======================\n";
+    std::cout << "If you pick an invalid index, nothing will change\n";
+    std::cout << "\nAny other key - Cancel Operation\n";
+    std::cout << "New Garage Location Vertex Id Index (0 - " << manager->getGraph().getNumVertex() - 1 << "): ";
+
+    int vertex_index;
+    std::cin >> vertex_index;
+
+    if (!cin.fail() && vertex_index >= 0 && vertex_index < manager->getGraph().getNumVertex())
+    {
+        manager->getGarageVertexId() = manager->getGraph().getVertexSet()[vertex_index]->getInfo();
+    }
+    else if (cin.fail())
+    {
+        cin.clear();
+    }
+    cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 
 template <class T>
@@ -411,12 +451,10 @@ void Interface<T>::manageBuses()
         std::cout << "=====\n";
         std::cout << "Buses\n";
         std::cout << "=====\n";
-        int index = 0;
         for (auto &bus : manager->getBuses())
         {
-            std::cout << "Bus " << index << ":\n";
+            std::cout << "Bus Id " << bus.id << ":\n";
             std::cout << "  Capacity: " << bus.capacity << "\n";
-            ++index;
         }
         std::cout << "\n1 - Add Bus\n";
         std::cout << "2 - Remove Bus\n";
@@ -429,8 +467,8 @@ void Interface<T>::manageBuses()
         {
             option = -1;
             cin.clear();
-            cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         }
+        cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
         std::vector<Bus<T>> &buses = manager->getBuses();
 
@@ -450,12 +488,14 @@ void Interface<T>::manageBuses()
             {
                 capacity = -1;
                 cin.clear();
-                cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             }
+            cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
             if (capacity > 0)
             {
                 Bus<T> bus;
+                bus.id = global_bus_id;
+                ++global_bus_id;
                 bus.capacity = capacity;
                 buses.push_back(bus);
             }
@@ -466,20 +506,29 @@ void Interface<T>::manageBuses()
             std::cout << "==========\n";
             std::cout << "Remove Bus\n";
             std::cout << "==========\n";
+            std::cout << "If you pick a Bus Id that does not exist, nothing will change\n";
             std::cout << "Any other key - Cancel Operation\n";
-            std::cout << "Bus Index (0 - " << buses.size() - 1 << "): ";
+            std::cout << "Bus Id: ";
 
-            std::cin >> index;
+            int bus_id;
+            std::cin >> bus_id;
 
-            if (!cin.fail() && index >= 0 && index < (int)buses.size())
+            if (!cin.fail() && bus_id >= 0 && bus_id < (int)global_bus_id)
             {
-                buses.erase(buses.begin() + index);
+                std::vector<Bus<T>> &buses = manager->getBuses();
+                for (unsigned int i = 0; i < buses.size(); i++)
+                {
+                    if (buses[i].id == bus_id)
+                    {
+                        buses.erase(buses.begin() + i);
+                    }
+                }
             }
             else if (cin.fail())
             {
                 cin.clear();
-                cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             }
+            cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         }
         break;
         default:
@@ -515,12 +564,13 @@ void Interface<T>::companiesMenu()
 
         int option;
         cin >> option;
+
         if (cin.fail())
         {
             option = -1;
             cin.clear();
-            cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         }
+        cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
         if (option >= 0)
         {
@@ -567,12 +617,13 @@ void Interface<T>::manageCompanyMenu(Company<T> &company)
 
         int option;
         std::cin >> option;
+
         if (cin.fail())
         {
             option = -1;
             cin.clear();
-            cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         }
+        cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
         switch (option)
         {
@@ -596,6 +647,7 @@ void Interface<T>::manageCompanyMenu(Company<T> &company)
 
             if (!cin.fail() && vertex_index >= 0 && vertex_index < manager->getGraph().getNumVertex())
             {
+                cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
                 std::cout << "\nAny other key - Cancel Operation";
                 std::cout << "\nNumber of workers: ";
                 int number_of_workers;
@@ -604,8 +656,8 @@ void Interface<T>::manageCompanyMenu(Company<T> &company)
                 {
                     number_of_workers = -1;
                     cin.clear();
-                    cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
                 }
+                cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
                 if (number_of_workers >= 0)
                 {
@@ -661,6 +713,7 @@ void Interface<T>::manageCompanyMenu(Company<T> &company)
             std::cout << "=======================\n";
             std::cout << "Update Company Location\n";
             std::cout << "=======================\n";
+            std::cout << "If you pick an invalid index, nothing will change\n";
             std::cout << "\nAny other key - Cancel Operation\n";
             std::cout << "New Company Location Vertex Id Index (0 - " << manager->getGraph().getNumVertex() - 1 << "): ";
 
@@ -674,8 +727,8 @@ void Interface<T>::manageCompanyMenu(Company<T> &company)
             else if (cin.fail())
             {
                 cin.clear();
-                cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             }
+            cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         }
         break;
         default:
@@ -694,7 +747,6 @@ void Interface<T>::addCompanyMenu()
     std::cout << "New company name: ";
 
     std::string name;
-    cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     std::getline(std::cin, name);
 
     std::cout << "New company Vertex Id Index (0 - " << manager->getGraph().getNumVertex() - 1 << "): ";
@@ -711,8 +763,8 @@ void Interface<T>::addCompanyMenu()
     else if (cin.fail())
     {
         cin.clear();
-        cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
+    cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 
 template <class T>
@@ -735,43 +787,54 @@ void Interface<T>::removeCompanyMenu()
     else if (cin.fail())
     {
         cin.clear();
-        cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
+    cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 
 template <class T>
-void Interface<T>::printBusesRoutes(Company<T> company) const
+void Interface<T>::printAndDrawBusesRoutes(Company<T> company) const
 {
-    if (gv != NULL)
+    for (Bus<int> bus : manager->getBuses())
     {
-        for (Bus<int> bus : manager->getBuses())
+        if (!bus.path.empty())
         {
-            if (!bus.path.empty())
+            if (bus.path[0] == company.company_vertex_id ||
+                bus.path[bus.path.size() - 1] == company.company_vertex_id)
             {
-                if (bus.path[0] == company.company_vertex_id ||
-                    bus.path[bus.path.size() - 1] == company.company_vertex_id)
+                // print bus route
+                std::cout << "Bus Id " << bus.id << ", Capacity " << bus.capacity << "\n";
+                std::cout << "Route: ";
+                for (unsigned int i = 0; i < bus.path.size(); i++)
                 {
-                    std::cout << "bus capacity " << bus.capacity << std::endl;
-                    std::cout << "bus path size " << bus.path.size() << std::endl;
+                    std::cout << bus.path[i];
+                    if (i + 1 != bus.path.size())
+                    {
+                        std::cout << "->";
+                    }
+                }
+                std::cout << "\n";
+
+                // draw bus route
+                if (gv != NULL)
+                {
                     for (unsigned int i = 0; i + 1 < bus.path.size(); i++)
                     {
-                        std::cout << bus.path[i] << " ";
-                        if (i + 2 == bus.path.size())
-                        {
-                            std::cout << bus.path[i + 1] << " ";
-                        }
                         manager->getGraph().dijkstraShortestPath(bus.path[i]);
                         manager->getGraph().getPathTo(bus.path[i + 1]);
                         Vertex<int> *vertex = manager->getGraph().findVertex(bus.path[i + 1]);
                         Vertex<int> *path = vertex->getPath();
-                        while (path->getPath() != NULL)
+                        if (path != NULL)
                         {
-                            gv->setVertexColor(path->getInfo(), RED);
-                            path = path->getPath();
+                            while (path->getPath() != NULL)
+                            {
+                                gv->setVertexColor(path->getInfo(), RED);
+                                path = path->getPath();
+                            }
                         }
                     }
-                    std::cout << "\n";
                     gv->rearrange();
+
+                    std::cout << "PRESS ENTER TO CONTINUE";
                     getchar();
 
                     // reset colors
