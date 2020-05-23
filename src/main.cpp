@@ -6,8 +6,8 @@
 int main()
 {
 	srand(time(NULL));
-	Manager<int> *manager = new Manager<int>();
-	Interface<int> interface(manager);
+	Manager<long> *manager = new Manager<long>();
+	Interface<long> interface(manager);
 	interface.chooseMap();
 
 	return 0;

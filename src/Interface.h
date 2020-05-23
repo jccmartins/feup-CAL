@@ -44,7 +44,7 @@ public:
     void printAndDrawBusesRoutes(Company<T> company) const;
     void resetVerticesColor() const;
     void manageBuses();
-    int getVertexIndex(int vertex_id) const;
+    int getVertexIndex(T vertex_id) const;
 };
 
 /**
@@ -77,7 +77,7 @@ void Interface<T>::setGarageColor() const
     if (gv != NULL)
     {
         // set garage vertex color
-        unsigned int garage = manager->getGarageVertexId();
+        T garage = manager->getGarageVertexId();
         gv->setVertexColor(garage, GARAGE_COLOR);
 
         gv->rearrange();
@@ -96,7 +96,7 @@ void Interface<T>::setLocationsColors(Company<T> company) const
         gv->setVertexColor(company.company_vertex_id, COMPANY_COLOR);
 
         // set bus stops vertices color
-        vector<Stop<int>> bus_stops = company.bus_stops;
+        vector<Stop<T>> bus_stops = company.bus_stops;
         for (auto stop : bus_stops)
         {
             gv->setVertexColor(stop.vertex_id, BUS_STOP_COLOR);
@@ -293,6 +293,7 @@ void Interface<T>::menu()
         std::cout << "5 - Show Vertices Label on Map Window\n";
         std::cout << "6 - Hide Vertices Label on Map Window\n";
         std::cout << "7 - Change Garage Location (" << manager->getGarageVertexId() << ")\n";
+        std::cout << "8 - Check Graph Connectivity\n";
         std::cout << "Any other key - Exit\n\n";
         std::cout << "Option: ";
 
@@ -410,6 +411,25 @@ void Interface<T>::menu()
         case 7:
         {
             changeGarageVertexId();
+        }
+        break;
+        case 8:
+        {
+            if (manager->getGraph().isConnected())
+            {
+                std::cout << "============================\n";
+                std::cout << "The graph is fully connected\n";
+                std::cout << "============================\n";
+            }
+            else
+            {
+                std::cout << "================================\n";
+                std::cout << "The graph is NOT fully connected\n";
+                std::cout << "================================\n";
+            }
+
+            std::cout << "PRESS ENTER TO GO BACK TO MENU";
+            getchar();
         }
         break;
         default:
@@ -794,7 +814,7 @@ void Interface<T>::removeCompanyMenu()
 template <class T>
 void Interface<T>::printAndDrawBusesRoutes(Company<T> company) const
 {
-    for (Bus<int> bus : manager->getBuses())
+    for (Bus<T> bus : manager->getBuses())
     {
         if (!bus.path.empty())
         {
@@ -821,8 +841,8 @@ void Interface<T>::printAndDrawBusesRoutes(Company<T> company) const
                     {
                         manager->getGraph().dijkstraShortestPath(bus.path[i]);
                         manager->getGraph().getPathTo(bus.path[i + 1]);
-                        Vertex<int> *vertex = manager->getGraph().findVertex(bus.path[i + 1]);
-                        Vertex<int> *path = vertex->getPath();
+                        Vertex<T> *vertex = manager->getGraph().findVertex(bus.path[i + 1]);
+                        Vertex<T> *path = vertex->getPath();
                         if (path != NULL)
                         {
                             while (path->getPath() != NULL)
@@ -864,7 +884,7 @@ void Interface<T>::resetVerticesColor() const
 }
 
 template <class T>
-int Interface<T>::getVertexIndex(int vertex_id) const
+int Interface<T>::getVertexIndex(T vertex_id) const
 {
     int index = 0;
     for (auto *vertex : manager->getGraph().getVertexSet())

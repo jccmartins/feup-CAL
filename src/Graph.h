@@ -12,6 +12,7 @@
 #include <string>
 #include <sstream>
 #include <fstream>
+#include <unordered_set>
 #include "MutablePriorityQueue.h"
 #include "lib/graphviewer.h"
 
@@ -48,6 +49,7 @@ public:
 	T getInfo() const;
 	double getDist() const;
 	Vertex *getPath() const;
+	std::vector<Edge<T>> getEdgesOut() const;
 
 	bool operator<(Vertex<T> &vertex) const; // // required by MutablePriorityQueue
 	friend class Graph<T>;
@@ -91,6 +93,12 @@ Vertex<T> *Vertex<T>::getPath() const
 	return this->path;
 }
 
+template <class T>
+std::vector<Edge<T>> Vertex<T>::getEdgesOut() const
+{
+	return this->edges_out;
+}
+
 /********************** Edge  ****************************/
 
 template <class T>
@@ -127,6 +135,9 @@ public:
 
 	void dijkstraShortestPath(const T &s);
 	vector<T> getPathTo(const T &dest) const;
+
+	bool isConnected(/*T origin_id, std::vector<T> vertices_to_check*/) const;
+	void dfs(Vertex<T> *vertex) const;
 
 	void loadNodesAndEdges(string city_name);
 	void drawGraph(GraphViewer *gv);
@@ -262,6 +273,43 @@ vector<T> Graph<T>::getPathTo(const T &dest) const
 		current = current->path;
 	}
 	return res;
+}
+
+template <class T>
+bool Graph<T>::isConnected() const
+{
+	// reset visited values
+	for (unsigned int i = 0; i < vertexSet.size(); i++)
+	{
+		vertexSet[i]->visited = false;
+	}
+
+	dfs(vertexSet[0]);
+
+	for (Vertex<T> *vertex : vertexSet)
+	{
+		if (!vertex->visited)
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+template <class T>
+void Graph<T>::dfs(Vertex<T> *vertex) const
+{
+	if (vertex->visited)
+	{
+		return;
+	}
+	vertex->visited = true;
+
+	for (Edge<T> edge : vertex->getEdgesOut())
+	{
+		dfs(edge.dest);
+	}
 }
 
 /**

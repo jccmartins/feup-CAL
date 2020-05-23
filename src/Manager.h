@@ -374,7 +374,7 @@ template <class T>
 std::unordered_map<std::pair<T, T>, double, pair_hash> Manager<T>::getBusStopsDistances(
     T garage_vertex_id, std::vector<Stop<T>> bus_stops, T company_vertex_id, string direction)
 {
-    std::unordered_map<std::pair<int, int>, double, pair_hash> distances;
+    std::unordered_map<std::pair<T, T>, double, pair_hash> distances;
 
     double distance;
     Vertex<T> *vertex;
@@ -465,7 +465,7 @@ double Manager<T>::simulatedAnnealing(Company<T> company, string direction)
     std::vector<Stop<T>> new_bus_stops;
     double r, prob;
     double current_distance = 0, new_distance = 0;
-    std::unordered_map<std::pair<int, int>, double, pair_hash> distances;
+    std::unordered_map<std::pair<T, T>, double, pair_hash> distances;
 
     std::vector<Bus<T> *> buses_for_company = getBusesForCompany(company, direction);
     if (buses_for_company.empty())
