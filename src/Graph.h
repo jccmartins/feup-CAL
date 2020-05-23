@@ -327,6 +327,16 @@ void Graph<T>::loadNodesAndEdges(string city_name)
 		nodes_filename = "resources/Mapas-20200424/GridGraphs/16x16/nodes.txt";
 		edges_filename = "resources/Mapas-20200424/GridGraphs/16x16/edges.txt";
 	}
+	else if (city_name.find("full") != std::string::npos || city_name.find("strong") != std::string::npos)
+	{
+		std::size_t pos = city_name.find("_");
+		string city_name_uppercase = city_name.substr(0, pos);
+		city_name_uppercase[0] = toupper(city_name_uppercase[0]);
+
+		nodes_filename = "resources/Mapas-20200424/PortugalMaps/PortugalMaps/New Maps/" + city_name_uppercase + "-20200523/" + city_name + "_nodes_xy.txt";
+		edges_filename = "resources/Mapas-20200424/PortugalMaps/PortugalMaps/New Maps/" + city_name_uppercase + "-20200523/" + city_name + "_edges.txt";
+		;
+	}
 	else
 	{
 		string city_name_lowercase = city_name;

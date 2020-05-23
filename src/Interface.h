@@ -127,6 +127,15 @@ void Interface<T>::chooseMap()
     std::cout << "11 - Portugal\n\n";
 
     std::cout << "12 - 16x16 Grid for testing purposes\n\n";
+
+    std::cout << "NEW MAPS:\n";
+    std::cout << "13 - Espinho (Full)\n";
+    std::cout << "14 - Espinho (Strong)\n";
+    std::cout << "15 - Penafiel (Full)\n";
+    std::cout << "16 - Penafiel (Strong)\n";
+    std::cout << "17 - Porto (Full)\n";
+    std::cout << "18 - Porto (Strong)\n\n";
+
     std::cout << "Any other key - Exit\n\n";
     std::cout << "Option: ";
 
@@ -178,6 +187,25 @@ void Interface<T>::chooseMap()
         break;
     case 12:
         city_name = "testing";
+        break;
+    case 13:
+        city_name = "espinho_full";
+        break;
+    case 14:
+        city_name = "espinho_strong";
+        break;
+    case 15:
+        city_name = "penafiel_full";
+        break;
+    case 16:
+        city_name = "penafiel_strong";
+        break;
+    case 17:
+        city_name = "porto_full";
+        break;
+    case 18:
+        city_name = "porto_strong";
+        break;
     default:
         break;
     }
@@ -292,7 +320,7 @@ void Interface<T>::menu()
         std::cout << "4 - Manage Buses\n";
         std::cout << "5 - Show Vertices Label on Map Window\n";
         std::cout << "6 - Hide Vertices Label on Map Window\n";
-        std::cout << "7 - Change Garage Location (" << manager->getGarageVertexId() << ")\n";
+        std::cout << "7 - Change Garage Location (" << getVertexIndex(manager->getGarageVertexId()) << ")\n";
         std::cout << "8 - Check Graph Connectivity\n";
         std::cout << "Any other key - Exit\n\n";
         std::cout << "Option: ";
