@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include <utility> // std::pair
+#include <chrono>
 
 #include "Graph.h"
 
@@ -458,6 +459,8 @@ std::unordered_map<std::pair<T, T>, double, pair_hash> Manager<T>::getBusStopsDi
 template <class T>
 double Manager<T>::simulatedAnnealing(Company<T> company, string direction)
 {
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
     unsigned int num_iterations = 100000;
     double temperature_decrease_rate = 0.01;
     double temperature, delta_distance;
@@ -515,6 +518,10 @@ double Manager<T>::simulatedAnnealing(Company<T> company, string direction)
 
         buses_for_company[i]->path = buses_paths[i];
     }
+
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+    std::cout << "Duration = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000000.0 << "[s]" << std::endl;
 
     return current_distance;
 }

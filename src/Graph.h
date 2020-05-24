@@ -136,7 +136,7 @@ public:
 	void dijkstraShortestPath(const T &s);
 	vector<T> getPathTo(const T &dest) const;
 
-	bool isConnected(/*T origin_id, std::vector<T> vertices_to_check*/) const;
+	bool isConnected(T origin) const;
 	void dfs(Vertex<T> *vertex) const;
 
 	void loadNodesAndEdges(string city_name);
@@ -276,7 +276,7 @@ vector<T> Graph<T>::getPathTo(const T &dest) const
 }
 
 template <class T>
-bool Graph<T>::isConnected() const
+bool Graph<T>::isConnected(T origin) const
 {
 	// reset visited values
 	for (unsigned int i = 0; i < vertexSet.size(); i++)
@@ -284,7 +284,9 @@ bool Graph<T>::isConnected() const
 		vertexSet[i]->visited = false;
 	}
 
-	dfs(vertexSet[0]);
+	Vertex<T> *origin_vertex = findVertex(origin);
+
+	dfs(origin_vertex);
 
 	for (Vertex<T> *vertex : vertexSet)
 	{
