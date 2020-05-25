@@ -205,6 +205,7 @@ std::vector<Bus<T> *> Manager<T>::getBusesForCompany(Company<T> company, string 
             if (!aux_buses[i]->path.empty())
             {
                 aux_buses.erase(aux_buses.begin() + i);
+                --i;
             }
         }
 

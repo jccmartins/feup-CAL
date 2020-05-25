@@ -564,6 +564,7 @@ void Interface<T>::manageBuses()
                     if (buses[i].id == bus_id)
                     {
                         buses.erase(buses.begin() + i);
+                        break;
                     }
                 }
             }
@@ -849,7 +850,7 @@ void Interface<T>::printAndDrawBusesRoutes(Company<T> company) const
                 std::cout << "Route: ";
                 for (unsigned int i = 0; i < bus.path.size(); i++)
                 {
-                    std::cout << bus.path[i];
+                    std::cout << getVertexIndex(bus.path[i]);
                     if (i + 1 != bus.path.size())
                     {
                         std::cout << "->";
